@@ -1,0 +1,32 @@
+import mongoose from "mongoose";
+import { Comment } from "../models/Comment.js";
+import { HttpError } from "../utils/http.js";
+import { commentSchema } from "../utils/validators.js";
+import { findIssueOr404 } from "./issueController.js";
+
+// GET /api/issues/:id/comments (oldest first)
+export async function listComments(req, res) {
+  await findIssueOr404(req.params.id);
+  const comments = await Comment.find({ issue: req.params.id }).sort({ createdAt: 1 }).populate("author", "name email");
+  res.json({ comments });
+}
+
+// POST /api/issues/:id/comments
+export async function addComment(req, res) {
+  const { body } = commentSchema.parse(req.body);
+  const issue = await findIssueOr404(req.params.id);
+
+  const created = await Comment.create({ body, issue: issue._id, author: req.user._id });
+  const comment = await created.populate("author", "name email");
+  res.status(201).json({ comment });
+}
+
+// DELETE /api/comments/:id: only the author can delete.
+export async function deleteComment(req, res) {
+  const comment = mongoose.isValidObjectId(req.params.id) ? await Comment.findById(req.params.id) : null;
+  if (!comment) throw new HttpError(404, "Comment not found");
+  if (!comment.author.equals(req.user._id)) throw new HttpError(403, "Only the author can delete this comment");
+
+  await comment.deleteOne();
+  res.json({ ok: true });
+}
