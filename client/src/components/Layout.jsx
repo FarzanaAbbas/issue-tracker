@@ -13,6 +13,7 @@ import {
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { prefetch } from "../hooks/useApi.js";
 import Avatar from "./Avatar.jsx";
 import Logo from "./Logo.jsx";
 
@@ -62,6 +63,7 @@ function Sidebar({ onNavigate }) {
                   to={to}
                   end={end}
                   onClick={onNavigate}
+                  onMouseEnter={() => to !== "/issues/new" && prefetch(to)}
                   className={({ isActive }) => navCls(isActive && !(to === "/issues" && location.search))}
                 >
                   <Icon className="h-[18px] w-[18px] opacity-80" />
@@ -79,7 +81,12 @@ function Sidebar({ onNavigate }) {
               const active = location.pathname === "/issues" && location.search === search;
               return (
                 <li key={search}>
-                  <Link to={`/issues${search}`} onClick={onNavigate} className={navCls(active)}>
+                  <Link
+                    to={`/issues${search}`}
+                    onClick={onNavigate}
+                    onMouseEnter={() => prefetch(`/issues${search}`)}
+                    className={navCls(active)}
+                  >
                     <Icon className="h-[18px] w-[18px] opacity-80" />
                     {label}
                   </Link>
@@ -118,10 +125,12 @@ export default function Layout() {
   useEffect(() => setMobileOpen(false), [location.pathname, location.search]);
 
   return (
-    <div className="min-h-screen">
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block">
-        <Sidebar />
+    <div className="min-h-screen lg:flex">
+      {/* Desktop sidebar: the navy column spans the full page height, its content stays pinned */}
+      <aside className="hidden w-64 shrink-0 bg-ink-900 lg:block">
+        <div className="sticky top-0 h-screen">
+          <Sidebar />
+        </div>
       </aside>
 
       {/* Mobile drawer */}
@@ -141,7 +150,7 @@ export default function Layout() {
         </div>
       )}
 
-      <div className="lg:pl-64">
+      <div className="min-w-0 flex-1">
         {/* Mobile top bar */}
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur lg:hidden">
           <button onClick={() => setMobileOpen(true)} className="btn-ghost -ml-2 px-2" aria-label="Open menu">

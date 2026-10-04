@@ -1,12 +1,12 @@
 import { ArrowUpRight, CheckCircle2, CircleDot, Clock3, Layers, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api } from "../api/client.js";
 import { UserCell } from "../components/Avatar.jsx";
 import { PriorityBadge, StatusBadge } from "../components/Badges.jsx";
 import PageHeader from "../components/PageHeader.jsx";
-import { EmptyState, ErrorState, Loading } from "../components/States.jsx";
+import { DashboardSkeleton } from "../components/Skeletons.jsx";
+import { EmptyState, ErrorState } from "../components/States.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { prefetchIssue, useApi } from "../hooks/useApi.js";
 import { PRIORITY_LABEL, timeAgo } from "../lib/format.js";
 
 const STAT_CARDS = [
@@ -25,12 +25,7 @@ function greeting() {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [data, setData] = useState(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.get("/dashboard").then((res) => setData(res.data)).catch((err) => setError(err.message));
-  }, []);
+  const { data, error } = useApi("/dashboard");
 
   const header = (
     <PageHeader
@@ -40,8 +35,8 @@ export default function Dashboard() {
     />
   );
 
-  if (error) return <>{header}<ErrorState message={error} /></>;
-  if (!data) return <>{header}<Loading label="Loading dashboard..." /></>;
+  if (error && !data) return <>{header}<ErrorState message={error} /></>;
+  if (!data) return <>{header}<DashboardSkeleton /></>;
 
   const valueFor = (key) => (key === "total" ? data.total : data.byStatus[key]);
   const pct = (n) => (data.total ? Math.round((n / data.total) * 100) : 0);
@@ -147,7 +142,7 @@ export default function Dashboard() {
           <ul className="divide-y divide-slate-100">
             {data.recent.map((i) => (
               <li key={i.id}>
-                <Link to={`/issues/${i.id}`} className="grid grid-cols-1 items-center gap-2 px-6 py-4 transition hover:bg-slate-50 sm:grid-cols-[1fr_auto_auto_auto] sm:gap-6">
+                <Link to={`/issues/${i.id}`} onMouseEnter={() => prefetchIssue(i.id)} className="grid grid-cols-1 items-center gap-2 px-6 py-4 transition hover:bg-slate-50 sm:grid-cols-[1fr_auto_auto_auto] sm:gap-6">
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-semibold text-slate-900">{i.title}</span>
                     <span className="text-xs text-slate-500">Updated {timeAgo(i.updatedAt)}</span>

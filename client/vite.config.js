@@ -11,4 +11,15 @@ export default defineConfig({
       "/api": `http://localhost:${process.env.API_PORT || 5000}`,
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Libraries change rarely: a separate chunk stays cached between app releases.
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          vendor: ["axios", "lucide-react"],
+        },
+      },
+    },
+  },
 });

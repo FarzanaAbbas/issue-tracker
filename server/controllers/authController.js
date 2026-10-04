@@ -34,7 +34,12 @@ export function logout(_req, res) {
   res.json({ ok: true });
 }
 
-// GET /api/auth/me
-export function me(req, res) {
-  res.json({ user: req.user });
+// GET /api/auth/me: also confirms the account still exists.
+export async function me(req, res) {
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    clearSessionCookie(res);
+    throw new HttpError(401, "Authentication required");
+  }
+  res.json({ user });
 }

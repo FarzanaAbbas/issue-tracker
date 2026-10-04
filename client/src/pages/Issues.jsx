@@ -1,11 +1,12 @@
 import { MessageSquare, Plus, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { api } from "../api/client.js";
 import { UserCell } from "../components/Avatar.jsx";
 import { PriorityBadge, StatusBadge } from "../components/Badges.jsx";
 import PageHeader from "../components/PageHeader.jsx";
-import { EmptyState, ErrorState, Loading } from "../components/States.jsx";
+import { IssueTableSkeleton } from "../components/Skeletons.jsx";
+import { EmptyState, ErrorState } from "../components/States.jsx";
+import { prefetchIssue, useApi } from "../hooks/useApi.js";
 import { useUsers } from "../hooks/useUsers.js";
 import { PRIORITY_LABEL, STATUS_LABEL, formatDate } from "../lib/format.js";
 
@@ -22,19 +23,10 @@ export default function Issues() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const users = useUsers();
-  const [issues, setIssues] = useState(null);
-  const [error, setError] = useState("");
   const [search, setSearch] = useState(params.get("q") ?? "");
   const query = params.toString();
-
-  useEffect(() => {
-    setIssues(null);
-    setError("");
-    api
-      .get(`/issues${query ? `?${query}` : ""}`)
-      .then((res) => setIssues(res.data.issues))
-      .catch((err) => setError(err.message));
-  }, [query]);
+  const { data, error } = useApi(`/issues${query ? `?${query}` : ""}`);
+  const issues = data?.issues;
 
   // Keep the search box in sync when filters change from elsewhere (e.g. sidebar).
   useEffect(() => setSearch(params.get("q") ?? ""), [params]);
@@ -105,10 +97,10 @@ export default function Issues() {
           )}
         </div>
 
-        {error ? (
+        {error && !issues ? (
           <div className="p-6"><ErrorState message={error} /></div>
         ) : !issues ? (
-          <Loading label="Loading issues..." />
+          <IssueTableSkeleton />
         ) : issues.length === 0 ? (
           <EmptyState
             title="No issues found"
@@ -127,7 +119,7 @@ export default function Issues() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {issues.map((i) => (
-                  <tr key={i.id} onClick={() => navigate(`/issues/${i.id}`)} className="cursor-pointer transition hover:bg-brand-50/40">
+                  <tr key={i.id} onClick={() => navigate(`/issues/${i.id}`)} onMouseEnter={() => prefetchIssue(i.id)} className="cursor-pointer transition hover:bg-brand-50/40">
                     <td className="max-w-[360px] px-6 py-4">
                       <Link to={`/issues/${i.id}`} onClick={(e) => e.stopPropagation()} className="block truncate text-sm font-semibold text-slate-900 hover:text-brand-700">
                         {i.title}

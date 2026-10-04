@@ -1,18 +1,14 @@
-import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../api/client.js";
 import IssueForm from "../components/IssueForm.jsx";
 import PageHeader from "../components/PageHeader.jsx";
-import { ErrorState, Loading } from "../components/States.jsx";
+import { FormSkeleton } from "../components/Skeletons.jsx";
+import { ErrorState } from "../components/States.jsx";
+import { useApi } from "../hooks/useApi.js";
 
 export default function EditIssue() {
   const { id } = useParams();
-  const [issue, setIssue] = useState(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.get(`/issues/${id}`).then((res) => setIssue(res.data.issue)).catch((err) => setError(err.message));
-  }, [id]);
+  const { data, error } = useApi(`/issues/${id}`);
+  const issue = data?.issue;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -24,7 +20,14 @@ export default function EditIssue() {
           { label: "Edit" },
         ]}
       />
-      {error ? <ErrorState message={error} /> : issue ? <IssueForm issue={issue} /> : <Loading />}
+      {error && !issue ? (
+        <ErrorState message={error} />
+      ) : issue ? (
+        // key: remount the form with fresh values if the cached issue gets refreshed
+        <IssueForm key={issue.updatedAt} issue={issue} />
+      ) : (
+        <FormSkeleton />
+      )}
     </div>
   );
 }

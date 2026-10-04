@@ -1,14 +1,16 @@
 import { CalendarDays, Clock, Pencil, Send, Trash2, UserPlus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client.js";
 import Avatar, { UserCell } from "../components/Avatar.jsx";
 import { PriorityBadge, StatusBadge } from "../components/Badges.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import PageHeader from "../components/PageHeader.jsx";
-import { ErrorState, Loading } from "../components/States.jsx";
+import { IssueDetailSkeleton, Skel } from "../components/Skeletons.jsx";
+import { ErrorState } from "../components/States.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
+import { invalidate, invalidateIssueLists, useApi } from "../hooks/useApi.js";
 import { useUsers } from "../hooks/useUsers.js";
 import { STATUS_LABEL, formatDateTime, timeAgo } from "../lib/format.js";
 
@@ -24,33 +26,33 @@ export default function IssueDetail() {
   const navigate = useNavigate();
   const toast = useToast();
   const users = useUsers();
-  const [issue, setIssue] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [error, setError] = useState("");
+  const issueQuery = useApi(`/issues/${id}`);
+  const commentsQuery = useApi(`/issues/${id}/comments`);
+  const issue = issueQuery.data?.issue;
+  const comments = commentsQuery.data?.comments ?? [];
+  const setIssue = (next) => issueQuery.mutate({ issue: next });
+  const setComments = (fn) => commentsQuery.mutate((prev) => ({ comments: fn(prev?.comments ?? []) }));
+  const error = issueQuery.error || commentsQuery.error;
   const [busy, setBusy] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [posting, setPosting] = useState(false);
   const [confirm, setConfirm] = useState(null); // { type: "issue" } | { type: "comment", id }
 
-  useEffect(() => {
-    Promise.all([api.get(`/issues/${id}`), api.get(`/issues/${id}/comments`)])
-      .then(([i, c]) => {
-        setIssue(i.data.issue);
-        setComments(c.data.comments);
-      })
-      .catch((err) => setError(err.message));
-  }, [id]);
-
+  // Optimistic update: show the change immediately, roll back if the server rejects it.
   async function update(body, message) {
-    setBusy(true);
+    const previous = issue;
+    const optimistic = { ...issue };
+    if ("status" in body) optimistic.status = body.status;
+    if ("assigneeId" in body) optimistic.assignee = users.find((u) => u.id === body.assigneeId) ?? null;
+    setIssue(optimistic);
     try {
       const res = await api.patch(`/issues/${id}`, body);
       setIssue(res.data.issue);
+      invalidateIssueLists();
       toast(message);
     } catch (err) {
+      setIssue(previous);
       toast(err.message, "error");
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -62,6 +64,7 @@ export default function IssueDetail() {
       const res = await api.post(`/issues/${id}/comments`, { body: newComment });
       setComments((c) => [...c, res.data.comment]);
       setNewComment("");
+      invalidateIssueLists();
     } catch (err) {
       toast(err.message, "error");
     } finally {
@@ -76,12 +79,15 @@ export default function IssueDetail() {
     try {
       if (confirm.type === "issue") {
         await api.delete(`/issues/${id}`);
+        invalidateIssueLists();
+        invalidate(`/issues/${id}`);
         toast("Issue deleted");
         navigate("/issues", { replace: true });
         return;
       }
       await api.delete(`/comments/${confirm.id}`);
       setComments((c) => c.filter((x) => x.id !== confirm.id));
+      invalidateIssueLists();
       toast("Comment deleted");
     } catch (err) {
       toast(err.message, "error");
@@ -91,8 +97,8 @@ export default function IssueDetail() {
     }
   }
 
-  if (error) return <ErrorState message={error} />;
-  if (!issue) return <Loading label="Loading issue..." />;
+  if (error && !issue) return <ErrorState message={error} />;
+  if (!issue) return <IssueDetailSkeleton />;
 
   const isReporter = issue.reporter.id === me.id;
 
@@ -141,7 +147,19 @@ export default function IssueDetail() {
             </div>
 
             <div className="px-6 py-6">
-              {comments.length === 0 ? (
+              {commentsQuery.loading ? (
+                <div className="mb-8 space-y-6" aria-busy="true">
+                  {[0, 1].map((k) => (
+                    <div key={k} className="flex gap-4">
+                      <Skel className="h-9 w-9 shrink-0 rounded-full" />
+                      <div className="flex-1 space-y-2 rounded-xl border border-slate-100 p-4">
+                        <Skel className="h-3 w-40" />
+                        <Skel className="h-4 w-4/5" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : comments.length === 0 ? (
                 <p className="mb-6 text-sm text-slate-500">No comments yet. Start the discussion below.</p>
               ) : (
                 <ol className="relative mb-8 space-y-6 before:absolute before:bottom-2 before:left-[17px] before:top-2 before:w-px before:bg-slate-200">

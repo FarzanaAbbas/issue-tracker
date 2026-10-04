@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client.js";
 import { useToast } from "../context/ToastContext.jsx";
+import { invalidateIssueLists, setCached } from "../hooks/useApi.js";
 import { useUsers } from "../hooks/useUsers.js";
 import { PRIORITY_LABEL, STATUS_LABEL } from "../lib/format.js";
 import { ErrorState } from "./States.jsx";
@@ -30,6 +31,9 @@ export default function IssueForm({ issue }) {
     try {
       const body = { ...form, assigneeId: form.assigneeId || null };
       const res = issue ? await api.patch(`/issues/${issue.id}`, body) : await api.post("/issues", body);
+      // Seed the detail page cache so it opens instantly, and refresh lists/counts.
+      setCached(`/issues/${res.data.issue.id}`, res.data);
+      invalidateIssueLists();
       toast(issue ? "Issue updated" : "Issue created");
       navigate(`/issues/${res.data.issue.id}`);
     } catch (err) {

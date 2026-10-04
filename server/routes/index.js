@@ -21,7 +21,7 @@ router.get("/health", (_req, res) => res.json({ ok: true }));
 router.post("/auth/register", h(register));
 router.post("/auth/login", h(login));
 router.post("/auth/logout", logout);
-router.get("/auth/me", requireAuth, me);
+router.get("/auth/me", requireAuth, h(me));
 
 // Everything below requires a logged-in user
 router.use(requireAuth);

@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { User } from "../models/User.js";
+import mongoose from "mongoose";
 import { HttpError, asyncHandler } from "../utils/http.js";
 
 export const SESSION_COOKIE = "it_session";
@@ -11,7 +11,10 @@ function secret() {
 }
 
 export function setSessionCookie(res, user) {
-  const token = jwt.sign({ sub: user.id }, secret(), { expiresIn: MAX_AGE_SECONDS });
+  // Name and email travel in the token so authenticated requests need no extra DB lookup.
+  const token = jwt.sign({ sub: user.id, name: user.name, email: user.email }, secret(), {
+    expiresIn: MAX_AGE_SECONDS,
+  });
   res.cookie(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -25,7 +28,8 @@ export function clearSessionCookie(res) {
   res.clearCookie(SESSION_COOKIE, { path: "/" });
 }
 
-// Requires a valid session; attaches the user document to req.user.
+// Requires a valid session token; attaches { _id, id, name, email } to req.user.
+// GET /api/auth/me additionally confirms the user still exists in the database.
 export const requireAuth = asyncHandler(async (req, _res, next) => {
   const token = req.cookies?.[SESSION_COOKIE];
   if (!token) throw new HttpError(401, "Authentication required");
@@ -36,10 +40,15 @@ export const requireAuth = asyncHandler(async (req, _res, next) => {
   } catch {
     throw new HttpError(401, "Session expired, please log in again");
   }
+  if (!payload.name || !mongoose.isValidObjectId(payload.sub)) {
+    throw new HttpError(401, "Session expired, please log in again");
+  }
 
-  // A valid token whose user no longer exists is treated as logged out.
-  const user = await User.findById(payload.sub);
-  if (!user) throw new HttpError(401, "Authentication required");
-  req.user = user;
+  req.user = {
+    _id: new mongoose.Types.ObjectId(payload.sub),
+    id: payload.sub,
+    name: payload.name,
+    email: payload.email,
+  };
   next();
 });

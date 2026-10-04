@@ -6,8 +6,11 @@ import { findIssueOr404 } from "./issueController.js";
 
 // GET /api/issues/:id/comments (oldest first)
 export async function listComments(req, res) {
-  await findIssueOr404(req.params.id);
-  const comments = await Comment.find({ issue: req.params.id }).sort({ createdAt: 1 }).populate("author", "name email");
+  // Check the issue and load its comments in parallel to save a round trip.
+  const [, comments] = await Promise.all([
+    findIssueOr404(req.params.id),
+    Comment.find({ issue: req.params.id }).sort({ createdAt: 1 }).populate("author", "name email"),
+  ]);
   res.json({ comments });
 }
 
