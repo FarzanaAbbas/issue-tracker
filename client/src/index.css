@@ -12,6 +12,11 @@
   h1, h2, h3 {
     @apply font-display tracking-tight text-slate-900;
   }
+  /* Edge/IE add their own reveal and clear buttons; the app provides its own toggle. */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
 }
 
 @layer components {
