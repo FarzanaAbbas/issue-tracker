@@ -4,8 +4,8 @@ A web application for teams to **report, assign, track and discuss issues**, bui
 
 | | |
 |---|---|
-| **Live demo** | https://YOUR-PROJECT.vercel.app |
-| **Source code** | https://github.com/YOUR-USERNAME/issue-tracker-mern |
+| **Live demo** | https://issue-tracker-two-xi.vercel.app/ |
+| **Source code** | https://github.com/FarzanaAbbas/issue-tracker |
 | **Demo login** | `demo@issuetracker.dev` / `demo1234` |
 
 Two more demo users are available, `alex@issuetracker.dev` and `sam@issuetracker.dev`, with the same password. You can also register a new account.
