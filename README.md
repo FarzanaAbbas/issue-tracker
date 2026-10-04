@@ -1,325 +1,401 @@
-# Issue Tracker System (MERN)
+# Issue Tracker System
 
-A full-stack issue tracker built with the **MERN stack**: **M**ongoDB, **E**xpress, **R**eact and **N**ode.js. Team members can register, log issues, assign them to each other, move them through a status workflow (**Open → In Progress → Closed**), discuss them in comments, and see live counts on a dashboard.
+A web application for teams to **report, assign, track and discuss issues**, built with the **MERN stack** (MongoDB, Express, React, Node.js).
 
-**Live demo:** https://YOUR-PROJECT.vercel.app  <!-- replace after deploying -->
-**Repository:** https://github.com/YOUR-USERNAME/issue-tracker-mern  <!-- replace after pushing -->
+| | |
+|---|---|
+| **Live demo** | https://YOUR-PROJECT.vercel.app |
+| **Source code** | https://github.com/YOUR-USERNAME/issue-tracker-mern |
+| **Demo login** | `demo@issuetracker.dev` / `demo1234` |
 
-> **Demo accounts** (available once the seed script has been run against the database):
-> `demo@issuetracker.dev`, `alex@issuetracker.dev`, `sam@issuetracker.dev`, all with the password `demo1234`.
-> You can also register a new account.
-
----
-
-## Table of contents
-
-1. [Features](#features)
-2. [Tech stack](#tech-stack)
-3. [Architecture](#architecture)
-4. [Project structure](#project-structure)
-5. [Getting started (local setup)](#getting-started-local-setup)
-6. [Environment variables](#environment-variables)
-7. [Available scripts](#available-scripts)
-8. [API reference](#api-reference)
-9. [Data model](#data-model)
-10. [Deployment](#deployment)
-11. [Security notes](#security-notes)
+Two more demo users are available, `alex@issuetracker.dev` and `sam@issuetracker.dev`, with the same password. You can also register a new account.
 
 ---
 
-## Features
+## Contents
 
-| Feature | Details |
-| --- | --- |
-| **User registration and login** | Sign up with email and password. Input is validated, passwords are hashed with bcrypt, and sessions use a JWT stored in an HTTP-only cookie for 7 days. Logging out clears the session. |
-| **Create, edit and delete issues** | Each issue has a title, description, status and priority. Any team member can edit an issue, but only the issue's **reporter** can delete it (its comments are deleted with it). Deleting asks for confirmation in a dialog. |
-| **Assign issues to users** | Assign an issue to any registered user from the form or straight from the issue page, use the *Assign to me* shortcut, or leave it *Unassigned*. |
-| **Status tracking** | Each issue is `Open`, `In Progress` or `Closed`, changed with one click using the status control on the issue page. Each issue also has a priority: `Low`, `Medium` or `High`. |
-| **Comments** | Every issue has a timeline of comments with author avatars and relative times. Authors can delete their own comments. |
-| **Dashboard with counts** | Shows totals for open, in-progress and closed issues (with percentages), *My work* (assigned to me, reported by me, unassigned), a breakdown by priority, the resolution rate and recently updated issues. Every count links to the matching filtered list. |
-| **Issue list** | Search by text, filter by status, priority and assignee, and sort the results. Filters are stored in the URL, so a filtered view can be shared or bookmarked. The sidebar has *quick filters*. |
-| **Formal, responsive UI** | A navy sidebar layout with a split-screen sign-in page, a consistent design system, avatars, status badges with colored dots, toast notifications, confirmation dialogs, and loading and empty states. Works on desktop, tablet and mobile (the sidebar becomes a drawer). |
+1. [Overview](#1-overview)
+2. [Features](#2-features)
+3. [Tech stack](#3-tech-stack)
+4. [Architecture](#4-architecture)
+5. [Folder structure](#5-folder-structure)
+6. [Run it locally](#6-run-it-locally)
+7. [Environment variables](#7-environment-variables)
+8. [API reference](#8-api-reference)
+9. [Database design](#9-database-design)
+10. [Deployment](#10-deployment)
+11. [Security](#11-security)
 
-## Tech stack
+---
 
-| Layer | Technology |
-| --- | --- |
-| **M**: Database | MongoDB (hosted on [MongoDB Atlas](https://www.mongodb.com/atlas) in production), accessed through **Mongoose 8** |
-| **E**: API | **Express 4** REST API, with request validation using [Zod](https://zod.dev) |
-| **R**: Front end | **React 18**, built with **Vite 5**, using React Router 6, Axios, Tailwind CSS 3 and lucide-react icons |
-| **N**: Runtime | **Node.js** 18 or later |
-| Authentication | `bcryptjs` for password hashing and `jsonwebtoken` for JWTs, sent in an HTTP-only cookie (via `cookie-parser`) |
-| Hosting | [Vercel](https://vercel.com): the React build is served from the CDN and the Express app runs as a serverless function |
+## 1. Overview
 
-## Architecture
+Teams often track problems in emails, chats or spreadsheets, and lose track of **who owns what** and **what state it is in**. This app gives the team one shared place to:
+
+- log every issue with a title, description and priority
+- assign it to a team member
+- move it through **Open → In Progress → Closed**
+- discuss it in comments
+- see the overall workload on a dashboard
+
+---
+
+## 2. Features
+
+### User accounts
+- Register with name, email and password
+- Log in and log out
+- Stay logged in for 7 days, with a secure cookie session
+- Pages are protected, so logged-out users are sent to the login page
+
+### Issues
+- **Create** an issue with title, description, status, priority and assignee
+- **Edit** any field of an issue
+- **Delete** an issue. Only the person who reported it can do this, and must confirm first.
+- **Search** by text, **filter** by status, priority or assignee, and **sort** by date
+
+### Assignment
+- Assign an issue to any registered user
+- Use the **Assign to me** shortcut
+- Leave an issue **Unassigned**
+
+### Status tracking
+- Every issue is **Open**, **In Progress** or **Closed**
+- Change the status with **one click** on the issue page
+- Statuses are shown as color-coded badges everywhere
+
+### Comments
+- Add comments to any issue
+- Comments are shown as a timeline with names and times
+- Authors can delete their own comments
+
+### Dashboard
+- Counts of **total**, **open**, **in-progress** and **closed** issues
+- **My work**: issues assigned to me, issues reported by me, and unassigned issues
+- A breakdown by **priority** and the **resolution rate**
+- **Recently updated** issues
+- Every count opens the matching filtered list
+
+### User interface
+- A formal design with a navy sidebar and a split-screen login page
+- Works on **desktop, tablet and mobile**
+- Toast messages, confirmation dialogs, and loading and empty states
+
+---
+
+## 3. Tech stack
+
+| Part | Technology |
+|---|---|
+| **M**: Database | MongoDB Atlas + Mongoose |
+| **E**: Back end | Express.js (REST API) |
+| **R**: Front end | React 18 + Vite, React Router, Tailwind CSS |
+| **N**: Runtime | Node.js 18+ |
+| Login security | bcrypt (passwords), JWT in an HTTP-only cookie (sessions) |
+| Validation | Zod |
+| Hosting | Vercel |
+
+**Language:** JavaScript, used for both the front end and the back end.
+
+---
+
+## 4. Architecture
 
 ```
-                   ┌───────────────────────────── Vercel ──────────────────────────────┐
-  Browser          │                                                                    │
-  React SPA ─────► │  CDN: client/dist (index.html, JS, CSS)                            │
-  (React Router)   │                                                                    │
-      │  Axios     │  /api/*  ──rewrite──►  api/index.js  (serverless Node function)    │
-      └──────────► │                          └─ Express app (server/app.js)            │
-                   │                               ├─ cookie-parser, express.json       │
-                   │                               ├─ connectDB() (cached connection)   │
-                   │                               ├─ routes → requireAuth → controllers│
-                   │                               └─ error middleware → { error }      │
-                   └───────────────────────────────────────┬────────────────────────────┘
-                                                           ▼
-                                                 MongoDB Atlas (Mongoose)
+   Browser (React app)
+          │
+          │  HTTPS
+          ▼
+ ┌──────────────── Vercel ────────────────┐
+ │                                        │
+ │   React pages   →  served from CDN     │
+ │                                        │
+ │   /api/* calls  →  Express API         │
+ │                    (serverless)        │
+ └───────────────────┬────────────────────┘
+                     │
+                     ▼
+              MongoDB Atlas
 ```
 
-- **Front end and back end.** The React single-page app in `client/` talks to the Express REST API in `server/` using Axios. Because both are served from the **same origin**, the session cookie works without any CORS setup. In development, Vite proxies `/api` to the Express server, and in production Vercel rewrites `/api/*` to the serverless function.
-- **One Express app, two entry points.** `server/app.js` builds the Express app. `api/index.js` exports it as a Vercel serverless function, and `server/index.js` runs it as a normal server for local development or any Node host (in production it also serves the React build).
-- **Authentication.** Logging in checks the password against its bcrypt hash, then signs a JWT whose `sub` is the user's id and sets it as an `HttpOnly`, `SameSite=Lax` cookie (`Secure` in production). The `requireAuth` middleware verifies the token and loads the user into `req.user`. In the React app, `AuthContext` restores the session on load with `GET /api/auth/me`, and route guards protect the pages.
-- **Authorization rules**, enforced on the server:
-  - Any logged-in user can view, create, edit, assign, and change the status of any issue.
-  - Only an issue's reporter can delete it.
-  - Only a comment's author can delete that comment.
-- **Database connection.** Mongoose connects once and the connection is cached on `globalThis`, so warm serverless calls reuse it. The dashboard counts are calculated by MongoDB aggregation pipelines that run in parallel.
-- **Error handling.** Async handlers are wrapped so that thrown errors reach a single error middleware. It returns `400` for validation errors and bad JSON, `404` for invalid ids, `409` for duplicates and `500` for anything else. The body is always `{ "error": "..." }`.
+**How it works**
 
-## Project structure
+1. The **React app** shows the pages and calls the API using Axios.
+2. The **Express API** checks the login cookie, validates the data, and reads or writes the database.
+3. **MongoDB Atlas** stores users, issues and comments.
+4. The front end and API share **one domain**, so the login cookie works without extra setup.
+
+**Who can do what**
+
+| Action | Allowed for |
+|---|---|
+| View, create, edit, assign, change status | Any logged-in user |
+| Delete an issue | Only the person who reported it |
+| Delete a comment | Only the person who wrote it |
+
+---
+
+## 5. Folder structure
 
 ```
 issue-tracker-mern/
-├── api/
-│   └── index.js                 # Vercel serverless entry (exports the Express app)
-├── server/                      # Express + Mongoose back end
-│   ├── app.js                   # Express app: middleware, /api routes, error handling
-│   ├── index.js                 # Standalone server (local dev / any Node host)
-│   ├── seed.js                  # Demo users, issues and comments
-│   ├── config/db.js             # Cached MongoDB connection
-│   ├── models/                  # User, Issue, Comment Mongoose schemas
-│   ├── controllers/             # auth, user, issue, comment, dashboard logic
-│   ├── routes/index.js          # REST route definitions
-│   ├── middleware/              # requireAuth, error handlers
-│   └── utils/                   # Zod validators, HttpError, asyncHandler
-├── client/                      # React front end (Vite)
-│   ├── index.html
-│   ├── vite.config.js           # Dev proxy /api → Express
-│   ├── tailwind.config.js       # Design tokens (navy "ink" + "brand" palette, fonts)
+│
+├── api/index.js          → Vercel entry point for the API
+│
+├── server/               → BACK END (Express + MongoDB)
+│   ├── app.js            → Express app setup
+│   ├── index.js          → Starts the server locally
+│   ├── seed.js           → Adds demo data
+│   ├── config/           → Database connection
+│   ├── models/           → User, Issue, Comment
+│   ├── controllers/      → Logic for each feature
+│   ├── routes/           → API URLs
+│   ├── middleware/       → Login check, error handling
+│   └── utils/            → Validation rules, helpers
+│
+├── client/               → FRONT END (React)
 │   └── src/
-│       ├── main.jsx, App.jsx    # Providers and routes
-│       ├── api/client.js        # Axios instance
-│       ├── context/             # AuthContext, ToastContext
-│       ├── components/          # Layout (sidebar), IssueForm, badges, dialogs, ...
-│       ├── hooks/useUsers.js
-│       ├── lib/format.js        # Labels and date helpers
-│       └── pages/               # Login, Register, Dashboard, Issues, IssueDetail, ...
-├── docs/BRD.md                  # Business Requirements Document (incl. Deployment)
-├── vercel.json                  # Build output and rewrites for Vercel
-├── .env.example
-└── package.json                 # Server dependencies and root scripts
+│       ├── pages/        → Login, Register, Dashboard, Issues, Issue detail
+│       ├── components/   → Sidebar, forms, badges, dialogs
+│       ├── context/      → Login state, toast messages
+│       └── api/          → API client (Axios)
+│
+├── docs/BRD.md           → Business Requirements Document
+├── vercel.json           → Vercel settings
+└── .env.example          → Template for environment variables
 ```
 
-## Getting started (local setup)
+---
 
-### Prerequisites
+## 6. Run it locally
 
-- **Node.js 18.18 or later** (Node 20 LTS recommended) and npm
-- A **MongoDB** database. Any of these works:
-  - a free [MongoDB Atlas](https://www.mongodb.com/atlas) cluster (nothing to install), or
-  - Docker: `docker run -d --name issue-mongo -p 27017:27017 mongo:7`, or
-  - a local MongoDB Community Server
+### You need
+- **Node.js 18 or newer**
+- A **MongoDB** database: a free MongoDB Atlas cluster, or MongoDB installed locally
 
 ### Steps
 
+**Step 1: Install**
 ```bash
-# 1. Clone the repository and install the server and client dependencies
 git clone https://github.com/YOUR-USERNAME/issue-tracker-mern.git
 cd issue-tracker-mern
 npm run install:all
-
-# 2. Configure the environment
-cp .env.example .env        # then edit MONGODB_URI and JWT_SECRET
-
-# 3. (Optional) Load demo data
-npm run seed
-
-# 4. Run the API and the React app together
-npm run dev
-#   API:   http://localhost:5000
-#   React: http://localhost:5173   ← open this one
 ```
 
-For a local MongoDB server, `.env` might look like this:
+**Step 2: Add settings.** Copy `.env.example` to a new file called `.env`, then fill in your values (see [section 7](#7-environment-variables)).
+
+**Step 3: Add demo data (optional)**
+```bash
+npm run seed
+```
+
+**Step 4: Start the app**
+```bash
+npm run dev
+```
+
+**Step 5:** Open **http://localhost:5173** in your browser.
+
+### All commands
+
+| Command | What it does |
+|---|---|
+| `npm run install:all` | Installs all packages (server + client) |
+| `npm run dev` | Starts the API and the React app together |
+| `npm run seed` | Adds demo users and issues |
+| `npm run build` | Builds the React app for production |
+| `npm start` | Starts the API server only |
+
+---
+
+## 7. Environment variables
+
+Create a `.env` file in the project folder:
 
 ```env
-MONGODB_URI="mongodb://127.0.0.1:27017/issue_tracker"
-JWT_SECRET="any-long-random-string-at-least-32-characters"
+MONGODB_URI="mongodb+srv://USERNAME:PASSWORD@cluster0.xxxxx.mongodb.net/issue_tracker?retryWrites=true&w=majority"
+JWT_SECRET="any-long-random-text-of-32-or-more-characters"
 PORT=5000
 ```
 
-To run a production build locally on a single port: `npm run build && NODE_ENV=production npm start`, then open http://localhost:5000.
+| Variable | Required | Meaning |
+|---|---|---|
+| `MONGODB_URI` | Yes | The MongoDB connection string |
+| `JWT_SECRET` | Yes | A secret key used to sign login sessions |
+| `PORT` | No | The local API port (default 5000) |
 
-## Environment variables
+> **Tip:** generate a strong secret with
+> `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `MONGODB_URI` | Yes | MongoDB connection string, for example `mongodb+srv://user:pass@cluster.mongodb.net/issue_tracker`. |
-| `JWT_SECRET` | Yes | Secret used to sign session tokens. Use a random string of 32 or more characters, for example from `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Changing it signs out every user. |
-| `PORT` | No | Port for the standalone Express server (default `5000`). Not used on Vercel. |
-| `NODE_ENV` | No | Set to `production` to mark cookies `Secure` and to make `server/index.js` serve the React build. Vercel sets this automatically. |
-| `API_PORT`, `CLIENT_PORT` | No | Development only: the API port the Vite proxy targets (default `5000`) and the Vite port (default `5173`). |
+> **Never upload `.env` to GitHub.** It is already excluded in `.gitignore`.
 
-Never commit `.env`. It is listed in `.gitignore`.
+---
 
-## Available scripts
+## 8. API reference
 
-Run these from the project root:
+- **Base URL:** `/api`
+- **Format:** JSON
+- **Login:** handled automatically by a secure cookie after you log in
+- **Errors** always look like `{ "error": "message" }`
 
-| Script | Description |
-| --- | --- |
-| `npm run install:all` | Install the server dependencies (root) and the client dependencies (`client/`) |
-| `npm run dev` | Run the Express API (with auto-restart) and the Vite dev server together |
-| `npm run dev:server` / `npm run dev:client` | Run only one of them |
-| `npm run build` | Install the client dependencies and build the React app into `client/dist` (Vercel uses this) |
-| `npm start` | Start the Express server |
-| `npm run seed` | Insert demo users and issues (safe to re-run) |
+### Authentication
 
-## API reference
-
-The base URL is `/api`. Requests and responses are JSON. Authentication uses the `it_session` HTTP-only cookie, which is set by register and login. With curl, keep cookies between requests using `-c cookies.txt -b cookies.txt`.
-
-Errors always look like `{ "error": "message" }`, with one of these status codes:
-
-| Status | Meaning |
-| --- | --- |
-| `400` | Validation error or invalid JSON |
-| `401` | Not logged in |
-| `403` | Not allowed |
-| `404` | Not found |
-| `409` | Conflict (for example, the email is already registered) |
-| `500` | Server error |
-
-### Auth
-
-| Method | Endpoint | Body | Response |
-| --- | --- | --- | --- |
-| `POST` | `/api/auth/register` | `{ name, email, password }` | `201 { user }` and sets the cookie. `409` if the email already exists. |
-| `POST` | `/api/auth/login` | `{ email, password }` | `200 { user }` and sets the cookie. `401` for invalid credentials. |
-| `POST` | `/api/auth/logout` | none | `{ ok: true }` and clears the cookie |
-| `GET` | `/api/auth/me` | none | `{ user }`, or `401` if not logged in |
-
-Validation rules for register: the name needs at least 2 characters, the email must be valid, and the password needs at least 6 characters.
-
-### Users
-
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/api/users` | `{ users: [{ id, name, email }] }`: the people an issue can be assigned to |
+| Method | URL | Purpose |
+|---|---|---|
+| POST | `/api/auth/register` | Create an account and log in |
+| POST | `/api/auth/login` | Log in |
+| POST | `/api/auth/logout` | Log out |
+| GET | `/api/auth/me` | Get the logged-in user |
 
 ### Issues
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/api/issues` | List issues as `{ issues }`. Accepts the optional query parameters below. |
-| `POST` | `/api/issues` | Create an issue. Body: `{ title, description?, status?, priority?, assigneeId? }`. The reporter is the current user. Returns `201 { issue }`. |
-| `GET` | `/api/issues/:id` | `{ issue }`, or `404` |
-| `PATCH` | `/api/issues/:id` | Partial update with any of `{ title, description, status, priority, assigneeId }`. Send `assigneeId: null` to unassign. Returns `{ issue }`. |
-| `DELETE` | `/api/issues/:id` | Delete an issue and its comments. **Reporter only.** |
+| Method | URL | Purpose |
+|---|---|---|
+| GET | `/api/issues` | List issues (with filters) |
+| POST | `/api/issues` | Create an issue |
+| GET | `/api/issues/:id` | Get one issue |
+| PATCH | `/api/issues/:id` | Update an issue (fields, status, assignee) |
+| DELETE | `/api/issues/:id` | Delete an issue (reporter only) |
 
-Query parameters for `GET /api/issues`:
+**Filters for the issue list** (optional, can be combined):
 
-| Parameter | Values |
-| --- | --- |
-| `status` | `OPEN`, `IN_PROGRESS` or `CLOSED` |
-| `priority` | `LOW`, `MEDIUM` or `HIGH` |
-| `assignee` | `me`, `unassigned`, or a user id |
-| `reporter` | `me` |
-| `q` | Text to search for in the title and description (case-insensitive) |
-| `sort` | `newest` (default), `oldest` or `updated` |
-
-`Issue` object:
-
-```json
-{
-  "id": "6ac22391d36dad550066150f",
-  "title": "Login page crashes on empty password",
-  "description": "Steps to reproduce...",
-  "status": "OPEN",
-  "priority": "HIGH",
-  "reporter": { "id": "...", "name": "Sam Tester", "email": "sam@issuetracker.dev" },
-  "assignee": { "id": "...", "name": "Alex Developer", "email": "alex@issuetracker.dev" },
-  "commentCount": 2,
-  "createdAt": "2026-10-04T09:00:00.000Z",
-  "updatedAt": "2026-10-04T09:30:00.000Z"
-}
-```
+| Filter | Example |
+|---|---|
+| By status | `?status=OPEN` (also `IN_PROGRESS`, `CLOSED`) |
+| By priority | `?priority=HIGH` (also `MEDIUM`, `LOW`) |
+| Assigned to me | `?assignee=me` |
+| Unassigned | `?assignee=unassigned` |
+| Reported by me | `?reporter=me` |
+| Search text | `?q=login` |
+| Sort | `?sort=oldest` or `?sort=updated` |
 
 ### Comments
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/api/issues/:id/comments` | `{ comments: [{ id, body, author, createdAt }] }`, oldest first |
-| `POST` | `/api/issues/:id/comments` | Body `{ body }` (1–2000 characters). Returns `201 { comment }`. |
-| `DELETE` | `/api/comments/:id` | Delete a comment. **Author only.** |
+| Method | URL | Purpose |
+|---|---|---|
+| GET | `/api/issues/:id/comments` | List the comments on an issue |
+| POST | `/api/issues/:id/comments` | Add a comment |
+| DELETE | `/api/comments/:id` | Delete a comment (author only) |
 
-### Dashboard
+### Other
 
-`GET /api/dashboard` returns the counts the dashboard displays:
+| Method | URL | Purpose |
+|---|---|---|
+| GET | `/api/users` | List users (for assigning) |
+| GET | `/api/dashboard` | Get the dashboard counts |
+| GET | `/api/health` | Check that the server is running |
 
+### Example: create an issue
+
+**Request:** `POST /api/issues`
 ```json
 {
-  "total": 12,
-  "byStatus":   { "OPEN": 5, "IN_PROGRESS": 4, "CLOSED": 3 },
-  "byPriority": { "LOW": 3, "MEDIUM": 5, "HIGH": 4 },
-  "assignedToMe": 4,
-  "assignedToMeOpen": 3,
-  "reportedByMe": 6,
-  "unassigned": 2,
-  "recent": [ /* the 5 most recently updated issues */ ]
+  "title": "Login button not working",
+  "description": "Nothing happens when I click Login.",
+  "priority": "HIGH",
+  "assigneeId": "6ac22391462e55370946e519"
 }
 ```
 
-### Health check
-
-`GET /api/health` returns `{ ok: true }`.
-
-### Example session with curl
-
-```bash
-B=http://localhost:5000/api
-curl -c c.txt -H "Content-Type: application/json" \
-     -d '{"email":"demo@issuetracker.dev","password":"demo1234"}' $B/auth/login
-curl -b c.txt -H "Content-Type: application/json" \
-     -d '{"title":"Broken save button","priority":"HIGH"}' $B/issues
-curl -b c.txt "$B/issues?status=OPEN&assignee=me"
-curl -b c.txt $B/dashboard
+**Response:** `201 Created`
+```json
+{
+  "issue": {
+    "id": "6ac223a648abfd775ea91c20",
+    "title": "Login button not working",
+    "status": "OPEN",
+    "priority": "HIGH",
+    "reporter": { "id": "...", "name": "Demo User" },
+    "assignee": { "id": "...", "name": "Alex Developer" },
+    "commentCount": 0,
+    "createdAt": "2026-10-04T10:00:00.000Z"
+  }
+}
 ```
 
-## Data model
+### Status codes
 
-There are three collections: `users`, `issues` and `comments`.
+| Code | Meaning |
+|---|---|
+| 200 / 201 | Success |
+| 400 | Invalid input |
+| 401 | Not logged in |
+| 403 | Not allowed |
+| 404 | Not found |
+| 409 | Email already registered |
+| 500 | Server error |
 
-| Model | Fields |
-| --- | --- |
-| **User** | `name`, `email` (unique, stored lowercase), `password` (bcrypt hash, never returned by the API), `createdAt`, `updatedAt` |
-| **Issue** | `title`, `description`, `status` (`OPEN`, `IN_PROGRESS` or `CLOSED`), `priority` (`LOW`, `MEDIUM` or `HIGH`), `reporter` (ObjectId → User), `assignee` (ObjectId → User, or null), `createdAt`, `updatedAt` |
-| **Comment** | `body`, `issue` (ObjectId → Issue), `author` (ObjectId → User), `createdAt`, `updatedAt` |
+---
 
-Indexes on `Issue.status`, `Issue.assignee`, `Issue.reporter` and `Comment.issue` speed up the filter and dashboard queries. When an issue is deleted, its comments are deleted too.
+## 9. Database design
 
-## Deployment
+The database has three collections.
 
-The app is deployed on **Vercel**, and its database is **MongoDB Atlas**. The full Deployment section is in [`docs/BRD.md`](docs/BRD.md#9-deployment). The short version:
+**User**
+| Field | Type | Notes |
+|---|---|---|
+| name | String | Required |
+| email | String | Unique |
+| password | String | Stored encrypted (bcrypt) |
 
-1. Create a free **MongoDB Atlas** cluster:
-   - Add a database user.
-   - Under **Network Access**, allow `0.0.0.0/0`. This is needed because Vercel's serverless functions don't use fixed IP addresses.
-   - Copy the connection string.
-2. Push this repository to GitHub.
-3. In Vercel, choose **Add New → Project** and import the repository. The build settings come from `vercel.json`.
-4. Under **Environment Variables**, add `MONGODB_URI` and `JWT_SECRET`, then click **Deploy**.
-5. (Optional) Seed demo data from your machine by running `npm run seed` with `MONGODB_URI` set to the Atlas connection string.
+**Issue**
+| Field | Type | Notes |
+|---|---|---|
+| title | String | Required |
+| description | String | Optional |
+| status | String | `OPEN`, `IN_PROGRESS` or `CLOSED` |
+| priority | String | `LOW`, `MEDIUM` or `HIGH` |
+| reporter | User reference | The person who created the issue |
+| assignee | User reference | Can be empty (unassigned) |
 
-After that, every push to `main` redeploys production, and every pull request gets its own preview URL.
+**Comment**
+| Field | Type | Notes |
+|---|---|---|
+| body | String | The comment text |
+| issue | Issue reference | The issue it belongs to |
+| author | User reference | The person who wrote it |
 
-## Security notes
+All records also have `createdAt` and `updatedAt` dates. Deleting an issue also deletes its comments.
 
-- Passwords are hashed with bcrypt (10 salt rounds) and are excluded from every query result and API response.
-- The session JWT is kept in an `HttpOnly` cookie, so page scripts can't read it. The cookie is `SameSite=Lax`, which protects requests that change data from CSRF, and it is `Secure` in production.
-- Every request that writes data is validated with Zod, and the permission rules are checked on the server.
-- Text searches are regex-escaped, and ids are validated before they reach a query, which prevents NoSQL injection and stops malformed ids from causing server errors.
-- The JSON body size is limited to 100 KB, and the `x-powered-by` header is disabled.
+---
+
+## 10. Deployment
+
+**Hosting:** Vercel (app) + MongoDB Atlas (database)
+
+### Step 1: Set up the database
+1. Create a free cluster on **MongoDB Atlas**.
+2. Add a **database user** (username + password).
+3. In **Network Access**, allow `0.0.0.0/0`.
+4. Copy the **connection string**.
+
+### Step 2: Upload the code to GitHub
+```bash
+git remote add origin https://github.com/YOUR-USERNAME/issue-tracker-mern.git
+git push -u origin main
+```
+
+### Step 3: Deploy on Vercel
+1. Go to **vercel.com → Add New → Project**.
+2. Import the GitHub repository.
+3. Add the environment variables `MONGODB_URI` and `JWT_SECRET`.
+4. Click **Deploy**.
+
+### Step 4: Check it works
+- Open `https://YOUR-PROJECT.vercel.app/api/health`. It should show `{"ok":true}`.
+- Open the main URL and log in.
+
+### Updating the app
+Push new code to GitHub, and **Vercel redeploys automatically**.
+
+See [`docs/BRD.md`](docs/BRD.md) for the full deployment guide.
+
+---
+
+## 11. Security
+
+- Passwords are **encrypted** with bcrypt and never sent back by the API.
+- Login sessions use a **secure HTTP-only cookie**, which page scripts cannot read.
+- All input is **validated** on the server.
+- Permissions are **checked on the server**, not only in the UI.
+- Search input is **sanitized** to prevent database injection.
