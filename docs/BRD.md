@@ -219,7 +219,7 @@ The [README](../README.md#api-reference) documents every request and response.
 | --- | --- | --- |
 | React front end | **Vercel** at https://YOUR-PROJECT.vercel.app | The `client/dist` build is served from Vercel's global CDN. All non-API paths fall back to `index.html`, so client-side routing works. |
 | Express API | **Vercel serverless function** (`api/index.js`) | `vercel.json` rewrites every `/api/*` request to the Express app. Because the API shares the front end's domain, no CORS setup is needed. |
-| Admin panel | **Separate Vercel project** (Root Directory `admin`) at https://YOUR-ADMIN-PROJECT.vercel.app | A separate React app built from `admin/`. `admin/vercel.json` forwards `/api/*` to the main app, so the admin app uses the same API and database through its own domain and its own admin session cookie. |
+| Admin panel | **Separate Vercel project** (Root Directory `admin`) at https://issue-tracker-admin-six.vercel.app | A separate React app built from `admin/`. `admin/vercel.json` forwards `/api/*` to the main app, so the admin app uses the same API and database through its own domain and its own admin session cookie. |
 | Database | **MongoDB Atlas** (free M0 cluster) | A managed MongoDB service. The API connects to it using `MONGODB_URI`. |
 | Source code | **GitHub** at https://github.com/YOUR-USERNAME/issue-tracker-mern | Connected to Vercel for continuous deployment |
 
