@@ -7,8 +7,8 @@
 | Document version | 1.0 |
 | Date | 4 October 2026 |
 | Author | Farzana Abbas |
-| Live application | https://YOUR-PROJECT.vercel.app |
-| Source code | https://github.com/YOUR-USERNAME/issue-tracker-mern |
+| Live application | https://issue-tracker-two-xi.vercel.app |
+| Source code | https://github.com/FarzanaAbbas/issue-tracker |
 
 ---
 
@@ -217,11 +217,11 @@ The [README](../README.md#api-reference) documents every request and response.
 
 | Component | Platform | Notes |
 | --- | --- | --- |
-| React front end | **Vercel** at https://YOUR-PROJECT.vercel.app | The `client/dist` build is served from Vercel's global CDN. All non-API paths fall back to `index.html`, so client-side routing works. |
+| React front end | **Vercel** at https://issue-tracker-two-xi.vercel.app | The `client/dist` build is served from Vercel's global CDN. All non-API paths fall back to `index.html`, so client-side routing works. |
 | Express API | **Vercel serverless function** (`api/index.js`) | `vercel.json` rewrites every `/api/*` request to the Express app. Because the API shares the front end's domain, no CORS setup is needed. |
 | Admin panel | **Separate Vercel project** (Root Directory `admin`) at https://issue-tracker-admin-six.vercel.app | A separate React app built from `admin/`. `admin/vercel.json` forwards `/api/*` to the main app, so the admin app uses the same API and database through its own domain and its own admin session cookie. |
 | Database | **MongoDB Atlas** (free M0 cluster) | A managed MongoDB service. The API connects to it using `MONGODB_URI`. |
-| Source code | **GitHub** at https://github.com/YOUR-USERNAME/issue-tracker-mern | Connected to Vercel for continuous deployment |
+| Source code | **GitHub** at https://github.com/FarzanaAbbas/issue-tracker | Connected to Vercel for continuous deployment |
 
 ### 9.2 Deployment approach
 
@@ -266,7 +266,7 @@ Vercel sets `NODE_ENV=production` automatically.
    git add .
    git commit -m "Issue Tracker System (MERN)"
    git branch -M main
-   git remote add origin https://github.com/YOUR-USERNAME/issue-tracker-mern.git
+   git remote add origin https://github.com/FarzanaAbbas/issue-tracker.git
    git push -u origin main
    ```
 3. **Create the Vercel project.** Sign in at <https://vercel.com>, choose **Add New → Project**, and import the `issue-tracker-mern` repository. Keep the root directory as `./`. The build command and output directory come from `vercel.json`, so set the framework preset to **Other** if Vercel asks.
@@ -274,7 +274,7 @@ Vercel sets `NODE_ENV=production` automatically.
    ```bash
    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
-5. **Deploy.** Click **Deploy**. When it finishes, open `https://YOUR-PROJECT.vercel.app/api/health`, which should return `{"ok":true}`.
+5. **Deploy.** Click **Deploy**. When it finishes, open `https://issue-tracker-two-xi.vercel.app/api/health`, which should return `{"ok":true}`.
 6. **(Optional) Load the demo data.** From your machine, run:
    ```bash
    MONGODB_URI="<atlas connection string>" npm run seed

@@ -195,8 +195,8 @@ issue-tracker-mern/
 
 **Step 1: Install**
 ```bash
-git clone https://github.com/YOUR-USERNAME/issue-tracker-mern.git
-cd issue-tracker-mern
+git clone https://github.com/FarzanaAbbas/issue-tracker.git
+cd issue-tracker
 npm run install:all
 ```
 
@@ -409,7 +409,7 @@ All records also have `createdAt` and `updatedAt` dates. Deleting an issue also 
 
 ### Step 2: Upload the code to GitHub
 ```bash
-git remote add origin https://github.com/YOUR-USERNAME/issue-tracker-mern.git
+git remote add origin https://github.com/FarzanaAbbas/issue-tracker.git
 git push -u origin main
 ```
 
@@ -420,7 +420,7 @@ git push -u origin main
 4. Click **Deploy**.
 
 ### Step 4: Check it works
-- Open `https://YOUR-PROJECT.vercel.app/api/health`. It should show `{"ok":true}`.
+- Open `https://issue-tracker-two-xi.vercel.app/api/health`. It should show `{"ok":true}`.
 - Open the main URL and log in.
 
 ### Step 5: Deploy the admin panel (second Vercel project)
