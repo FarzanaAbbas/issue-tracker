@@ -17,7 +17,7 @@ function readStoredUser() {
 
 function storeUser(user) {
   try {
-    if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: user.id, name: user.name, email: user.email }));
+    if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify({ id: user.id, name: user.name, email: user.email, role: user.role }));
     else localStorage.removeItem(STORAGE_KEY);
   } catch {
     // Storage unavailable (private mode etc.): the app still works, just without the instant shell.

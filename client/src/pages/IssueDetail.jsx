@@ -101,6 +101,8 @@ export default function IssueDetail() {
   if (!issue) return <IssueDetailSkeleton />;
 
   const isReporter = issue.reporter.id === me.id;
+  const isAdmin = me.role === "admin";
+  const canDelete = isReporter || isAdmin;
 
   return (
     <>
@@ -110,7 +112,7 @@ export default function IssueDetail() {
         actions={
           <>
             <Link to={`/issues/${issue.id}/edit`} className="btn-secondary"><Pencil className="h-4 w-4" /> Edit</Link>
-            {isReporter && (
+            {canDelete && (
               <button onClick={() => setConfirm({ type: "issue" })} className="btn-secondary text-red-600 hover:bg-red-50">
                 <Trash2 className="h-4 w-4" /> Delete
               </button>
@@ -172,7 +174,7 @@ export default function IssueDetail() {
                             <span className="font-semibold text-slate-800">{c.author.name}</span>
                             <span className="text-slate-500" title={formatDateTime(c.createdAt)}> &middot; {timeAgo(c.createdAt)}</span>
                           </span>
-                          {c.author.id === me.id && (
+                          {(c.author.id === me.id || isAdmin) && (
                             <button onClick={() => setConfirm({ type: "comment", id: c.id })} className="text-slate-400 hover:text-red-600" aria-label="Delete comment" title="Delete comment">
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -268,7 +270,7 @@ export default function IssueDetail() {
               </div>
             </dl>
           </div>
-          {!isReporter && <p className="px-1 text-xs text-slate-400">Only the reporter ({issue.reporter.name}) can delete this issue.</p>}
+          {!canDelete && <p className="px-1 text-xs text-slate-400">Only the reporter ({issue.reporter.name}) can delete this issue.</p>}
         </aside>
       </div>
 

@@ -41,7 +41,9 @@ export function invalidate(...prefixes) {
 /** After any issue/comment change: lists and dashboard counts must refetch. */
 export function invalidateIssueLists() {
   for (const key of cache.keys()) {
-    if (key === "/issues" || key.startsWith("/issues?") || key === "/dashboard") cache.delete(key);
+    if (key === "/issues" || key.startsWith("/issues?") || key === "/dashboard" || key.startsWith("/admin/")) {
+      cache.delete(key);
+    }
   }
 }
 
@@ -83,5 +85,14 @@ export function useApi(url) {
     [url]
   );
 
-  return { data, error, loading: data === undefined && !error, mutate };
+  // Refetch now, ignoring the cache (after admin actions etc.).
+  const refresh = useCallback(async () => {
+    if (!url) return;
+    cache.delete(url);
+    const d = await load(url);
+    setData(d);
+    return d;
+  }, [url]);
+
+  return { data, error, loading: data === undefined && !error, mutate, refresh };
 }

@@ -7,6 +7,7 @@ A web application for teams to **report, assign, track and discuss issues**, bui
 | **Live demo** | https://issue-tracker-two-xi.vercel.app/ |
 | **Source code** | https://github.com/FarzanaAbbas/issue-tracker |
 | **Demo login** | `demo@issuetracker.dev` / `demo1234` |
+| **Admin login** | `admin@issuetracker.dev` / `admin1234` |
 
 Two more demo users are available, `alex@issuetracker.dev` and `sam@issuetracker.dev`, with the same password. You can also register a new account.
 
@@ -76,6 +77,18 @@ Teams often track problems in emails, chats or spreadsheets, and lose track of *
 - **Recently updated** issues
 - Every count opens the matching filtered list
 
+### Admin panel
+Admins see an extra **Admin panel** section in the sidebar:
+- **Overview**: user and issue totals, a chart of issues created per day (last 14 days), the status mix, team workload per member, and recent sign-ups
+- **Users**: search and filter users, **make or remove admins**, **deactivate or reactivate** accounts, and **delete** users
+- **Manage issues**: select issues and **change their status** or **delete** them in bulk
+- Admins can also delete any issue or comment
+
+Safety rules:
+- An admin cannot demote, deactivate or delete themselves
+- The last active admin cannot be removed
+- Deactivated users are signed out and cannot log in
+
 ### User interface
 - A formal design with a navy sidebar and a split-screen login page
 - Works on **desktop, tablet and mobile**
@@ -130,8 +143,9 @@ Teams often track problems in emails, chats or spreadsheets, and lose track of *
 | Action | Allowed for |
 |---|---|
 | View, create, edit, assign, change status | Any logged-in user |
-| Delete an issue | Only the person who reported it |
-| Delete a comment | Only the person who wrote it |
+| Delete an issue | The person who reported it, or an admin |
+| Delete a comment | The person who wrote it, or an admin |
+| Use the admin panel (users, bulk actions, stats) | Admins only |
 
 ---
 
@@ -202,7 +216,9 @@ npm run dev
 |---|---|
 | `npm run install:all` | Installs all packages (server + client) |
 | `npm run dev` | Starts the API and the React app together |
-| `npm run seed` | Adds demo users and issues |
+| `npm run seed` | Adds demo users, issues and the admin account |
+| `npm run make-admin -- you@example.com` | Makes an existing account an admin |
+| `npm run demo:clear` | Removes the demo users and their issues |
 | `npm run build` | Builds the React app for production |
 | `npm start` | Starts the API server only |
 
@@ -222,6 +238,7 @@ PORT=5000
 |---|---|---|
 | `MONGODB_URI` | Yes | The MongoDB connection string |
 | `JWT_SECRET` | Yes | A secret key used to sign login sessions |
+| `ADMIN_EMAILS` | No | Comma-separated emails that become admins when they register or log in |
 | `PORT` | No | The local API port (default 5000) |
 
 > **Tip:** generate a strong secret with
@@ -285,6 +302,16 @@ PORT=5000
 | GET | `/api/dashboard` | Get the dashboard counts |
 | GET | `/api/health` | Check that the server is running |
 
+### Admin (admins only, otherwise `403`)
+
+| Method | URL | Purpose |
+|---|---|---|
+| GET | `/api/admin/stats` | Totals, issues per day, status mix, team workload, recent sign-ups |
+| GET | `/api/admin/users` | List users with issue counts (`?q=`, `?role=admin|user`, `?status=active|deactivated`) |
+| PATCH | `/api/admin/users/:id` | Change `role` (`user` / `admin`) or `active` (`true` / `false`) |
+| DELETE | `/api/admin/users/:id` | Delete a user, their reported issues and their comments |
+| POST | `/api/admin/issues/bulk` | `{ ids, action: "status", status }` or `{ ids, action: "delete" }` |
+
 ### Example: create an issue
 
 **Request:** `POST /api/issues`
@@ -337,6 +364,8 @@ The database has three collections.
 | name | String | Required |
 | email | String | Unique |
 | password | String | Stored encrypted (bcrypt) |
+| role | String | `user` or `admin` |
+| active | Boolean | `false` = deactivated (cannot log in) |
 
 **Issue**
 | Field | Type | Notes |

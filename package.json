@@ -12,7 +12,8 @@
     "build": "cd client && npm install && npm run build",
     "start": "node server/index.js",
     "seed": "node server/seed.js",
-    "demo:clear": "node server/clear-demo.js"
+    "demo:clear": "node server/clear-demo.js",
+    "make-admin": "node server/make-admin.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

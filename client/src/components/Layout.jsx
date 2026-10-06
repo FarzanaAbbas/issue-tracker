@@ -7,8 +7,12 @@ import {
   LogOut,
   Menu,
   PenLine,
+  ShieldCheck,
   UserCheck,
+  Users,
   X,
+  Activity,
+  ClipboardList,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -21,6 +25,12 @@ const MAIN_NAV = [
   { to: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { to: "/issues", label: "All issues", Icon: ListTodo, end: true },
   { to: "/issues/new", label: "New issue", Icon: FilePlus2 },
+];
+
+const ADMIN_NAV = [
+  { to: "/admin", label: "Overview", Icon: Activity, end: true },
+  { to: "/admin/users", label: "Users", Icon: Users },
+  { to: "/admin/issues", label: "Manage issues", Icon: ClipboardList },
 ];
 
 const QUICK_FILTERS = [
@@ -95,13 +105,35 @@ function Sidebar({ onNavigate }) {
             })}
           </ul>
         </div>
+        {user.role === "admin" && (
+          <div>
+            <p className="mb-2 flex items-center gap-1.5 px-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-brand-300">
+              <ShieldCheck className="h-3.5 w-3.5" /> Admin panel
+            </p>
+            <ul className="space-y-1">
+              {ADMIN_NAV.map(({ to, label, Icon, end }) => (
+                <li key={to}>
+                  <NavLink to={to} end={end} onClick={onNavigate} className={({ isActive }) => navCls(isActive)}>
+                    <Icon className="h-[18px] w-[18px] opacity-80" />
+                    {label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </nav>
 
       <div className="border-t border-white/5 p-3">
         <div className="flex items-center gap-3 rounded-lg px-2 py-2">
           <Avatar name={user.name} size="md" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-white">{user.name}</p>
+            <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-white">
+              <span className="truncate">{user.name}</span>
+              {user.role === "admin" && (
+                <span className="rounded bg-brand-500/30 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-100">Admin</span>
+              )}
+            </p>
             <p className="truncate text-xs text-slate-400">{user.email}</p>
           </div>
           <button

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { isAdmin } from "../middleware/auth.js";
 import { Comment } from "../models/Comment.js";
 import { Issue, PRIORITIES, STATUSES } from "../models/Issue.js";
 import { User } from "../models/User.js";
@@ -78,10 +79,12 @@ export async function updateIssue(req, res) {
   res.json({ issue: await findIssueById(issue._id) });
 }
 
-// DELETE /api/issues/:id: only the reporter can delete; comments are removed too.
+// DELETE /api/issues/:id: the reporter or an admin can delete; comments are removed too.
 export async function deleteIssue(req, res) {
   const issue = await findIssueOr404(req.params.id);
-  if (!issue.reporter.equals(req.user._id)) throw new HttpError(403, "Only the reporter can delete this issue");
+  if (!issue.reporter.equals(req.user._id) && !isAdmin(req.user)) {
+    throw new HttpError(403, "Only the reporter can delete this issue");
+  }
 
   await Promise.all([Comment.deleteMany({ issue: issue._id }), issue.deleteOne()]);
   res.json({ ok: true });

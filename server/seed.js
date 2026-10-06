@@ -9,6 +9,7 @@ import { Issue } from "./models/Issue.js";
 import { User } from "./models/User.js";
 
 const DEMO_PASSWORD = "demo1234";
+const ADMIN = { name: "Admin User", email: "admin@issuetracker.dev", password: "admin1234" };
 
 async function main() {
   await connectDB();
@@ -25,8 +26,18 @@ async function main() {
     )
   );
 
+  // Admin account for the admin panel (role is enforced even if the account already exists).
+  await User.findOneAndUpdate(
+    { email: ADMIN.email },
+    {
+      $setOnInsert: { name: ADMIN.name, email: ADMIN.email, password: await bcrypt.hash(ADMIN.password, 10) },
+      $set: { role: "admin", active: true },
+    },
+    { upsert: true }
+  );
+
   if (await Issue.exists({})) {
-    console.log("Issues already exist, skipping issue seed.");
+    console.log(`Issues already exist, skipping issue seed. Admin account: ${ADMIN.email} / ${ADMIN.password}`);
     return;
   }
 
@@ -44,6 +55,7 @@ async function main() {
   }
 
   console.log(`Seeded ${people.length} users and ${issues.length} issues. Password for all demo users: ${DEMO_PASSWORD}`);
+  console.log(`Admin account: ${ADMIN.email} / ${ADMIN.password}`);
 }
 
 main()

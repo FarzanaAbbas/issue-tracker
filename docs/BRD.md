@@ -48,12 +48,13 @@ Teams that track issues through email threads, chat messages or spreadsheets los
 - Comments on issues
 - A dashboard with aggregate counts
 - Searching, filtering and sorting issues
+- An admin panel: system overview, user and role management, and bulk issue actions
 - A formal, responsive user interface
 - Cloud deployment and project documentation
 
 ### 4.2 Out of scope (possible future enhancements)
 
-- Multiple projects or workspaces, and admin roles
+- Multiple projects or workspaces
 - Email or real-time notifications
 - File attachments
 - Password reset by email, and OAuth or social login
@@ -68,6 +69,7 @@ Teams that track issues through email threads, chat messages or spreadsheets los
 | Team member | Any authenticated user | Can view all issues and the dashboard, and create issues. Can edit any issue's title, description, status, priority and assignee, and comment on any issue. |
 | Reporter | The team member who created a particular issue | Has every team member permission, and can also **delete** that issue |
 | Comment author | The team member who wrote a particular comment | Can **delete** that comment |
+| Admin | A team member with the admin role | Everything a team member can do, plus access to the **admin panel**: view system statistics, manage users (roles, deactivation, deletion), change or delete issues in bulk, and delete any issue or comment |
 
 ## 6. Functional requirements
 
@@ -129,6 +131,21 @@ Teams that track issues through email threads, chat messages or spreadsheets los
 | FR-6.4 | The dashboard lists the 5 most recently updated issues. |
 | FR-6.5 | Each count links to the issue list with the matching filter applied. |
 
+### 6.7 Admin panel
+
+| ID | Requirement |
+| --- | --- |
+| FR-7.1 | Every user has a role: **User** (default) or **Admin**. Only admins see the *Admin panel* section in the sidebar and can open admin pages; the API rejects non-admins with `403`. |
+| FR-7.2 | **Overview:** shows the number of users (and new users this week), admins, deactivated accounts, issues and comments; a chart of issues created per day over the last 14 days; the status mix; team workload (open, in-progress and closed issues per assignee); and the five most recent sign-ups. |
+| FR-7.3 | **Users:** admins can search users by name or email and filter by role and status. Each row shows the user's role, status, issues reported, open issues assigned and join date. |
+| FR-7.4 | Admins can **make a user an admin** or **remove admin access**. |
+| FR-7.5 | Admins can **deactivate** a user, after confirming. A deactivated user is signed out within about 30 seconds, cannot log in, and is removed from the assignee list; their issues and comments are kept. Admins can **reactivate** the account. |
+| FR-7.6 | Admins can **delete** a user, after confirming. This removes the account, the issues they reported and all of their comments; issues assigned to them become unassigned. |
+| FR-7.7 | Safety rules: an admin cannot demote, deactivate or delete their own account, and the last active admin cannot be demoted, deactivated or deleted. |
+| FR-7.8 | **Manage issues:** admins can search and filter all issues, select several (or all) and **change their status** or **delete** them in one action, after confirming deletion. |
+| FR-7.9 | Admins can delete any issue or comment from the issue page. |
+| FR-7.10 | The first admin is created by the seed script (demo admin), by listing emails in the `ADMIN_EMAILS` environment variable, or with `npm run make-admin -- <email>`. |
+
 ## 7. Non-functional requirements
 
 | ID | Category | Requirement |
@@ -172,7 +189,7 @@ Vercel
 
 | Collection | Fields | Relationships |
 | --- | --- | --- |
-| users | name, email (unique), password (hash), createdAt, updatedAt | A user reports issues, is assigned issues, and writes comments |
+| users | name, email (unique), password (hash), role (user/admin), active, createdAt, updatedAt | A user reports issues, is assigned issues, and writes comments |
 | issues | title, description, status, priority, reporter, assignee (nullable), createdAt, updatedAt | `reporter` and `assignee` reference users. Each issue has comments. |
 | comments | body, issue, author, createdAt, updatedAt | `issue` references an issue and `author` references a user |
 
@@ -188,6 +205,7 @@ Rule: when an issue is deleted, its comments are deleted too.
 | Comments | `GET /api/issues/:id/comments`, `POST /api/issues/:id/comments`, `DELETE /api/comments/:id` |
 | Dashboard | `GET /api/dashboard` |
 | Health | `GET /api/health` |
+| Admin | `GET /api/admin/stats`, `GET /api/admin/users`, `PATCH /api/admin/users/:id`, `DELETE /api/admin/users/:id`, `POST /api/admin/issues/bulk` |
 
 The [README](../README.md#api-reference) documents every request and response.
 
@@ -230,6 +248,7 @@ The [README](../README.md#api-reference) documents every request and response.
 | --- | --- |
 | `MONGODB_URI` | The Atlas connection string, for example `mongodb+srv://<user>:<password>@<cluster>.mongodb.net/issue_tracker?retryWrites=true&w=majority` |
 | `JWT_SECRET` | A random string of at least 32 characters |
+| `ADMIN_EMAILS` (optional) | Comma-separated emails that are made admins when they register or log in |
 
 Vercel sets `NODE_ENV=production` automatically.
 
@@ -307,3 +326,4 @@ GitHub Pages is **not** suitable for this project. It serves only static files, 
 | AC-5 | A user can add comments and delete their own | FR-5.x |
 | AC-6 | The dashboard counts match the issue data and update after changes | FR-6.x |
 | AC-7 | The application is available at the public Vercel URL, and the README and BRD are enough for another developer to run and deploy it | Section 9, README |
+| AC-8 | An admin can view the overview, change roles, deactivate/reactivate and delete users, and change or delete issues in bulk; a regular user cannot open the admin panel | FR-7.x |

@@ -15,6 +15,13 @@ export function ProtectedRoute() {
   return <Outlet />;
 }
 
+// Admin pages: non-admins are sent back to their dashboard (the API enforces this too).
+export function AdminRoute() {
+  const { user } = useAuth();
+  if (user?.role !== "admin") return <Navigate to="/dashboard" replace />;
+  return <Outlet />;
+}
+
 // Login / register pages: logged-in users are sent to the dashboard.
 export function PublicOnlyRoute() {
   const { user } = useAuth();

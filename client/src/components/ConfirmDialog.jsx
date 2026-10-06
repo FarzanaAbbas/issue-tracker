@@ -1,7 +1,7 @@
 import { AlertTriangle } from "lucide-react";
 import { useEffect } from "react";
 
-export default function ConfirmDialog({ open, title, message, confirmLabel = "Delete", busy, onConfirm, onCancel }) {
+export default function ConfirmDialog({ open, title, message, confirmLabel = "Delete", busyLabel = "Deleting...", busy, onConfirm, onCancel }) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => e.key === "Escape" && onCancel();
@@ -27,7 +27,7 @@ export default function ConfirmDialog({ open, title, message, confirmLabel = "De
         <div className="mt-6 flex justify-end gap-3">
           <button className="btn-secondary" onClick={onCancel} disabled={busy}>Cancel</button>
           <button className="btn-danger" onClick={onConfirm} disabled={busy}>
-            {busy ? "Deleting..." : confirmLabel}
+            {busy ? busyLabel : confirmLabel}
           </button>
         </div>
       </div>
