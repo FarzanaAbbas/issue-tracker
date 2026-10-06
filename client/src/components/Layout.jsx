@@ -7,12 +7,8 @@ import {
   LogOut,
   Menu,
   PenLine,
-  ShieldCheck,
   UserCheck,
-  Users,
   X,
-  Activity,
-  ClipboardList,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -25,12 +21,6 @@ const MAIN_NAV = [
   { to: "/dashboard", label: "Dashboard", Icon: LayoutDashboard },
   { to: "/issues", label: "All issues", Icon: ListTodo, end: true },
   { to: "/issues/new", label: "New issue", Icon: FilePlus2 },
-];
-
-const ADMIN_NAV = [
-  { to: "/admin", label: "Overview", Icon: Activity, end: true },
-  { to: "/admin/users", label: "Users", Icon: Users },
-  { to: "/admin/issues", label: "Manage issues", Icon: ClipboardList },
 ];
 
 const QUICK_FILTERS = [
@@ -105,23 +95,6 @@ function Sidebar({ onNavigate }) {
             })}
           </ul>
         </div>
-        {user.role === "admin" && (
-          <div>
-            <p className="mb-2 flex items-center gap-1.5 px-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-brand-300">
-              <ShieldCheck className="h-3.5 w-3.5" /> Admin panel
-            </p>
-            <ul className="space-y-1">
-              {ADMIN_NAV.map(({ to, label, Icon, end }) => (
-                <li key={to}>
-                  <NavLink to={to} end={end} onClick={onNavigate} className={({ isActive }) => navCls(isActive)}>
-                    <Icon className="h-[18px] w-[18px] opacity-80" />
-                    {label}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </nav>
 
       <div className="border-t border-white/5 p-3">

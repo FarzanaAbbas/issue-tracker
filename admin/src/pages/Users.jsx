@@ -1,17 +1,17 @@
 import { Ban, RotateCcw, Search, ShieldCheck, ShieldOff, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { api } from "../../api/client.js";
-import { AccountStatusBadge, RoleBadge } from "../../components/AdminBadges.jsx";
-import Avatar from "../../components/Avatar.jsx";
-import ConfirmDialog from "../../components/ConfirmDialog.jsx";
-import PageHeader from "../../components/PageHeader.jsx";
-import { Skel } from "../../components/Skeletons.jsx";
-import { EmptyState, ErrorState } from "../../components/States.jsx";
-import { useAuth } from "../../context/AuthContext.jsx";
-import { useToast } from "../../context/ToastContext.jsx";
-import { invalidate, invalidateIssueLists, useApi } from "../../hooks/useApi.js";
-import { formatDate } from "../../lib/format.js";
+import { api } from "../api/client.js";
+import { AccountStatusBadge, RoleBadge } from "../components/AdminBadges.jsx";
+import Avatar from "../components/Avatar.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import PageHeader from "../components/PageHeader.jsx";
+import { Skel } from "../components/Skeletons.jsx";
+import { EmptyState, ErrorState } from "../components/States.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useToast } from "../context/ToastContext.jsx";
+import { invalidateAll, useApi } from "../hooks/useApi.js";
+import { formatDate } from "../lib/format.js";
 
 const CONFIRM_TEXT = {
   deactivate: (u) => ({
@@ -59,7 +59,7 @@ export default function AdminUsers() {
   const [busyId, setBusyId] = useState(null);
 
   const query = params.toString();
-  const { data, error, refresh } = useApi(`/admin/users${query ? `?${query}` : ""}`);
+  const { data, error, refresh } = useApi(`/users${query ? `?${query}` : ""}`);
   const users = data?.users;
 
   function setFilter(key, value) {
@@ -80,16 +80,15 @@ export default function AdminUsers() {
     setBusyId(user.id);
     try {
       if (action === "delete") {
-        await api.delete(`/admin/users/${user.id}`);
-        invalidateIssueLists();
+        await api.delete(`/users/${user.id}`);
         toast(`${user.name} was deleted`);
       } else {
         const body = { promote: { role: "admin" }, demote: { role: "user" }, deactivate: { active: false }, activate: { active: true } }[action];
-        await api.patch(`/admin/users/${user.id}`, body);
+        await api.patch(`/users/${user.id}`, body);
         const msg = { promote: "is now an admin", demote: "is no longer an admin", deactivate: "was deactivated", activate: "was reactivated" }[action];
         toast(`${user.name} ${msg}`);
       }
-      invalidate("/admin/", "/users");
+      invalidateAll();
       await refresh();
     } catch (err) {
       toast(err.message, "error");
@@ -108,7 +107,7 @@ export default function AdminUsers() {
       <PageHeader
         title="User management"
         description="Manage roles and access for everyone in the workspace."
-        breadcrumbs={[{ label: "Admin", to: "/admin" }, { label: "Users" }]}
+        breadcrumbs={[{ label: "Admin", to: "/" }, { label: "Users" }]}
       />
 
       <div className="card">
@@ -148,11 +147,11 @@ export default function AdminUsers() {
           <EmptyState title="No users found" description="Try a different search or filter." />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left">
+            <table className="w-full min-w-[780px] text-left">
               <thead>
                 <tr className="border-y border-slate-100 bg-slate-50/70">
                   {["User", "Role", "Status", "Reported", "Open assigned", "Joined", ""].map((h, i) => (
-                    <th key={i} className={`eyebrow px-6 py-3 ${i === 3 || i === 4 ? "text-right" : ""}`}>{h}</th>
+                    <th key={i} className={`eyebrow px-4 py-3 ${i === 3 || i === 4 ? "text-right" : ""}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -162,7 +161,7 @@ export default function AdminUsers() {
                   const busy = busyId === u.id;
                   return (
                     <tr key={u.id} className={u.active ? "" : "bg-slate-50/60"}>
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 py-3.5">
                         <span className="flex items-center gap-3">
                           <Avatar name={u.name} size="md" />
                           <span className="min-w-0">
@@ -174,32 +173,32 @@ export default function AdminUsers() {
                           </span>
                         </span>
                       </td>
-                      <td className="px-6 py-3.5"><RoleBadge role={u.role} /></td>
-                      <td className="px-6 py-3.5"><AccountStatusBadge active={u.active} /></td>
-                      <td className="px-6 py-3.5 text-right text-sm tabular-nums text-slate-700">{u.reportedCount}</td>
-                      <td className="px-6 py-3.5 text-right text-sm tabular-nums text-slate-700">{u.openAssignedCount}</td>
-                      <td className="whitespace-nowrap px-6 py-3.5 text-sm text-slate-500">{formatDate(u.createdAt)}</td>
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 py-3.5"><RoleBadge role={u.role} /></td>
+                      <td className="px-4 py-3.5"><AccountStatusBadge active={u.active} /></td>
+                      <td className="px-4 py-3.5 text-right text-sm tabular-nums text-slate-700">{u.reportedCount}</td>
+                      <td className="px-4 py-3.5 text-right text-sm tabular-nums text-slate-700">{u.openAssignedCount}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5 text-sm text-slate-500">{formatDate(u.createdAt)}</td>
+                      <td className="px-4 py-3.5">
                         {isMe ? (
                           <span className="text-xs text-slate-400">Your account</span>
                         ) : (
                           <div className="flex justify-end gap-1.5">
                             {u.role === "admin" ? (
-                              <button disabled={busy} onClick={() => setConfirm({ type: "demote", user: u })} className="btn-secondary px-2.5 py-1.5 text-xs" title="Remove admin access">
-                                <ShieldOff className="h-3.5 w-3.5" /> Remove admin
+                              <button disabled={busy} onClick={() => setConfirm({ type: "demote", user: u })} className="btn-secondary px-2.5 py-1.5 text-xs" title="Remove admin access" aria-label="Remove admin access">
+                                <ShieldOff className="h-3.5 w-3.5" /> <span className="hidden 2xl:inline">Remove admin</span>
                               </button>
                             ) : (
-                              <button disabled={busy || !u.active} onClick={() => run(u, "promote")} className="btn-secondary px-2.5 py-1.5 text-xs" title="Make admin">
-                                <ShieldCheck className="h-3.5 w-3.5" /> Make admin
+                              <button disabled={busy || !u.active} onClick={() => run(u, "promote")} className="btn-secondary px-2.5 py-1.5 text-xs" title="Make admin" aria-label="Make admin">
+                                <ShieldCheck className="h-3.5 w-3.5" /> <span className="hidden 2xl:inline">Make admin</span>
                               </button>
                             )}
                             {u.active ? (
-                              <button disabled={busy} onClick={() => setConfirm({ type: "deactivate", user: u })} className="btn-secondary px-2.5 py-1.5 text-xs text-amber-700" title="Deactivate">
-                                <Ban className="h-3.5 w-3.5" /> Deactivate
+                              <button disabled={busy} onClick={() => setConfirm({ type: "deactivate", user: u })} className="btn-secondary px-2.5 py-1.5 text-xs text-amber-700" title="Deactivate" aria-label="Deactivate">
+                                <Ban className="h-3.5 w-3.5" /> <span className="hidden 2xl:inline">Deactivate</span>
                               </button>
                             ) : (
-                              <button disabled={busy} onClick={() => run(u, "activate")} className="btn-secondary px-2.5 py-1.5 text-xs text-emerald-700" title="Reactivate">
-                                <RotateCcw className="h-3.5 w-3.5" /> Reactivate
+                              <button disabled={busy} onClick={() => run(u, "activate")} className="btn-secondary px-2.5 py-1.5 text-xs text-emerald-700" title="Reactivate" aria-label="Reactivate">
+                                <RotateCcw className="h-3.5 w-3.5" /> <span className="hidden 2xl:inline">Reactivate</span>
                               </button>
                             )}
                             <button disabled={busy} onClick={() => setConfirm({ type: "delete", user: u })} className="btn-secondary px-2 py-1.5 text-red-600 hover:bg-red-50" title="Delete user" aria-label={`Delete ${u.name}`}>

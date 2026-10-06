@@ -76,11 +76,55 @@ export const requireAuth = asyncHandler(async (req, _res, next) => {
   next();
 });
 
-// Admin-only routes re-check the role against the database (never the cache).
-export const requireAdmin = asyncHandler(async (req, _res, next) => {
-  const status = await getUserStatus(req.user.id, { fresh: true });
-  if (status?.role !== "admin") throw new HttpError(403, "Admin access required");
-  req.user.role = "admin";
+// ---- Admin app session ----------------------------------------------------
+// The admin panel is a separate app with its own cookie, scoped to /api/admin, so
+// signing in to the admin app never replaces the user app's session (and vice versa).
+export const ADMIN_COOKIE = "it_admin";
+const ADMIN_MAX_AGE_SECONDS = 60 * 60 * 8; // 8 hours
+
+export function setAdminCookie(res, user) {
+  const token = jwt.sign({ sub: user.id, name: user.name, email: user.email, scope: "admin" }, secret(), {
+    expiresIn: ADMIN_MAX_AGE_SECONDS,
+  });
+  res.cookie(ADMIN_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: ADMIN_MAX_AGE_SECONDS * 1000,
+    path: "/api/admin",
+  });
+}
+
+export function clearAdminCookie(res) {
+  res.clearCookie(ADMIN_COOKIE, { path: "/api/admin" });
+}
+
+// Requires an admin-app session; the role is re-checked against the database on every request.
+export const requireAdminSession = asyncHandler(async (req, _res, next) => {
+  const token = req.cookies?.[ADMIN_COOKIE];
+  if (!token) throw new HttpError(401, "Admin sign-in required");
+
+  let payload;
+  try {
+    payload = jwt.verify(token, secret());
+  } catch {
+    throw new HttpError(401, "Admin session expired, please sign in again");
+  }
+  if (payload.scope !== "admin" || !mongoose.isValidObjectId(payload.sub)) {
+    throw new HttpError(401, "Admin sign-in required");
+  }
+
+  const status = await getUserStatus(payload.sub, { fresh: true });
+  if (!status || !status.active) throw new HttpError(401, "Admin sign-in required");
+  if (status.role !== "admin") throw new HttpError(403, "Admin access required");
+
+  req.user = {
+    _id: new mongoose.Types.ObjectId(payload.sub),
+    id: payload.sub,
+    name: payload.name,
+    email: payload.email,
+    role: "admin",
+  };
   next();
 });
 

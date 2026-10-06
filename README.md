@@ -7,6 +7,7 @@ A web application for teams to **report, assign, track and discuss issues**, bui
 | **Live demo** | https://issue-tracker-two-xi.vercel.app/ |
 | **Source code** | https://github.com/FarzanaAbbas/issue-tracker |
 | **Demo login** | `demo@issuetracker.dev` / `demo1234` |
+| **Admin panel** | https://YOUR-ADMIN-PROJECT.vercel.app (separate app) |
 | **Admin login** | `admin@issuetracker.dev` / `admin1234` |
 
 Two more demo users are available, `alex@issuetracker.dev` and `sam@issuetracker.dev`, with the same password. You can also register a new account.
@@ -77,12 +78,12 @@ Teams often track problems in emails, chats or spreadsheets, and lose track of *
 - **Recently updated** issues
 - Every count opens the matching filtered list
 
-### Admin panel
-Admins see an extra **Admin panel** section in the sidebar:
+### Admin panel (separate app)
+The admin panel is a **separate React app** with its own URL and port (`localhost:5174` locally) and its own sign-in page. Only accounts with the **admin** role can sign in, and the admin session is kept separate from the user app's session. It has three pages:
 - **Overview**: user and issue totals, a chart of issues created per day (last 14 days), the status mix, team workload per member, and recent sign-ups
 - **Users**: search and filter users, **make or remove admins**, **deactivate or reactivate** accounts, and **delete** users
 - **Manage issues**: select issues and **change their status** or **delete** them in bulk
-- Admins can also delete any issue or comment
+- Admins can also delete any issue or comment from the user app
 
 Safety rules:
 - An admin cannot demote, deactivate or delete themselves
@@ -167,6 +168,9 @@ issue-tracker-mern/
 │   ├── middleware/       → Login check, error handling
 │   └── utils/            → Validation rules, helpers
 │
+├── admin/                → ADMIN PANEL (separate React app, port 5174)
+│   └── src/pages/        → Login, Overview, Users, Issues
+│
 ├── client/               → FRONT END (React)
 │   └── src/
 │       ├── pages/        → Login, Register, Dashboard, Issues, Issue detail
@@ -208,14 +212,16 @@ npm run seed
 npm run dev
 ```
 
-**Step 5:** Open **http://localhost:5173** in your browser.
+**Step 5:** Open the apps in your browser:
+- User app: **http://localhost:5173**
+- Admin panel: **http://localhost:5174** (sign in with an admin account)
 
 ### All commands
 
 | Command | What it does |
 |---|---|
-| `npm run install:all` | Installs all packages (server + client) |
-| `npm run dev` | Starts the API and the React app together |
+| `npm run install:all` | Installs all packages (server, user app and admin app) |
+| `npm run dev` | Starts the API, the user app (5173) and the admin panel (5174) together |
 | `npm run seed` | Adds demo users, issues and the admin account |
 | `npm run make-admin -- you@example.com` | Makes an existing account an admin |
 | `npm run demo:clear` | Removes the demo users and their issues |
@@ -302,7 +308,9 @@ PORT=5000
 | GET | `/api/dashboard` | Get the dashboard counts |
 | GET | `/api/health` | Check that the server is running |
 
-### Admin (admins only, otherwise `403`)
+### Admin (used by the admin app; admin session cookie required)
+
+Sign in with `POST /api/admin/auth/login` (admins only); `POST /api/admin/auth/logout` and `GET /api/admin/auth/me` manage the admin session. All other admin endpoints return `401` without an admin session and `403` if the account is no longer an admin.
 
 | Method | URL | Purpose |
 |---|---|---|
@@ -310,6 +318,7 @@ PORT=5000
 | GET | `/api/admin/users` | List users with issue counts (`?q=`, `?role=admin|user`, `?status=active|deactivated`) |
 | PATCH | `/api/admin/users/:id` | Change `role` (`user` / `admin`) or `active` (`true` / `false`) |
 | DELETE | `/api/admin/users/:id` | Delete a user, their reported issues and their comments |
+| GET | `/api/admin/issues` | All issues (`?status=`, `?priority=`, `?q=`, `?sort=`) |
 | POST | `/api/admin/issues/bulk` | `{ ids, action: "status", status }` or `{ ids, action: "delete" }` |
 
 ### Example: create an issue
@@ -413,6 +422,12 @@ git push -u origin main
 ### Step 4: Check it works
 - Open `https://YOUR-PROJECT.vercel.app/api/health`. It should show `{"ok":true}`.
 - Open the main URL and log in.
+
+### Step 5: Deploy the admin panel (second Vercel project)
+1. In Vercel, **Add New → Project** and import the **same** GitHub repository again.
+2. Set **Root Directory** to `admin` and the framework preset to **Other** (settings come from `admin/vercel.json`).
+3. No environment variables are needed: `admin/vercel.json` forwards `/api/*` to the main app's URL. If your main app URL is different, update it in `admin/vercel.json` and `admin/.env.production`.
+4. Click **Deploy**, then sign in with an admin account.
 
 ### Updating the app
 Push new code to GitHub, and **Vercel redeploys automatically**.

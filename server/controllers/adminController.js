@@ -1,10 +1,13 @@
+import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import { z } from "zod";
-import { forgetUserStatus } from "../middleware/auth.js";
+import { clearAdminCookie, forgetUserStatus, setAdminCookie } from "../middleware/auth.js";
 import { Comment } from "../models/Comment.js";
-import { Issue, STATUSES } from "../models/Issue.js";
+import { Issue, PRIORITIES, STATUSES } from "../models/Issue.js";
 import { ROLES, User } from "../models/User.js";
 import { HttpError } from "../utils/http.js";
+import { findIssues } from "../utils/issueQuery.js";
+import { loginSchema } from "../utils/validators.js";
 
 const { ObjectId } = mongoose.Types;
 const DAY = 24 * 60 * 60 * 1000;
@@ -210,4 +213,46 @@ export async function bulkIssues(req, res) {
     Issue.deleteMany({ _id: { $in: objectIds } }),
   ]);
   res.json({ ok: true, deleted: result.deletedCount });
+}
+
+// ---- Admin app authentication ----------------------------------------------
+
+// POST /api/admin/auth/login: only active admins can sign in to the admin app.
+export async function adminLogin(req, res) {
+  const { email, password } = loginSchema.parse(req.body);
+  const user = await User.findOne({ email }).select("+password");
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    throw new HttpError(401, "Invalid email or password");
+  }
+  if (user.role !== "admin") throw new HttpError(403, "This account does not have admin access");
+  if (user.active === false) throw new HttpError(403, "This account has been deactivated");
+
+  setAdminCookie(res, user);
+  res.json({ user });
+}
+
+// POST /api/admin/auth/logout
+export function adminLogout(_req, res) {
+  clearAdminCookie(res);
+  res.json({ ok: true });
+}
+
+// GET /api/admin/auth/me
+export async function adminMe(req, res) {
+  const user = await User.findById(req.user._id);
+  res.json({ user });
+}
+
+// GET /api/admin/issues?status=&priority=&q=&sort=  (all issues, for bulk management)
+export async function listAllIssues(req, res) {
+  const { status, priority, q, sort } = req.query;
+  const match = {};
+  if (STATUSES.includes(status)) match.status = status;
+  if (PRIORITIES.includes(priority)) match.priority = priority;
+  if (typeof q === "string" && q.trim()) {
+    const rx = new RegExp(escapeRegex(q.trim()), "i");
+    match.$or = [{ title: rx }, { description: rx }];
+  }
+  const order = sort === "oldest" ? { createdAt: 1 } : sort === "updated" ? { updatedAt: -1 } : { createdAt: -1 };
+  res.json({ issues: await findIssues(match, { sort: order }) });
 }

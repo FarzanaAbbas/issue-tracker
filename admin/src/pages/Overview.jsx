@@ -1,13 +1,13 @@
 import { Ban, Layers, MessageSquare, ShieldCheck, Users } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { RoleBadge } from "../../components/AdminBadges.jsx";
-import Avatar from "../../components/Avatar.jsx";
-import PageHeader from "../../components/PageHeader.jsx";
-import { DashboardSkeleton } from "../../components/Skeletons.jsx";
-import { ErrorState } from "../../components/States.jsx";
-import { useApi } from "../../hooks/useApi.js";
-import { STATUS_LABEL, timeAgo } from "../../lib/format.js";
+import { RoleBadge } from "../components/AdminBadges.jsx";
+import Avatar from "../components/Avatar.jsx";
+import PageHeader from "../components/PageHeader.jsx";
+import { DashboardSkeleton } from "../components/Skeletons.jsx";
+import { ErrorState } from "../components/States.jsx";
+import { useApi } from "../hooks/useApi.js";
+import { STATUS_LABEL, timeAgo } from "../lib/format.js";
 
 // Status hues match the badges used everywhere else; always shown with text labels.
 const STATUS_COLOR = { OPEN: "bg-sky-500", IN_PROGRESS: "bg-amber-400", CLOSED: "bg-emerald-500" };
@@ -118,14 +118,14 @@ function StatusMix({ byStatus, total }) {
 }
 
 export default function AdminOverview() {
-  const { data, error } = useApi("/admin/stats");
+  const { data, error } = useApi("/stats");
 
   const header = (
     <PageHeader
       title="Admin overview"
       description="System-wide health of users, issues and team workload."
       breadcrumbs={[{ label: "Admin" }, { label: "Overview" }]}
-      actions={<Link to="/admin/users" className="btn-primary"><Users className="h-4 w-4" /> Manage users</Link>}
+      actions={<Link to="/users" className="btn-primary"><Users className="h-4 w-4" /> Manage users</Link>}
     />
   );
 
@@ -139,10 +139,10 @@ export default function AdminOverview() {
       {header}
 
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-5 xl:gap-6">
-        <StatTile label="Users" value={users.total} sub={`+${users.newThisWeek} this week`} Icon={Users} tint="bg-brand-50 text-brand-700" to="/admin/users" />
-        <StatTile label="Admins" value={users.admins} Icon={ShieldCheck} tint="bg-slate-100 text-ink-900" to="/admin/users?role=admin" />
-        <StatTile label="Deactivated" value={users.deactivated} Icon={Ban} tint="bg-red-50 text-red-700" to="/admin/users?status=deactivated" />
-        <StatTile label="Issues" value={issues.total} sub={`${issues.byStatus.OPEN + issues.byStatus.IN_PROGRESS} still active`} Icon={Layers} tint="bg-sky-50 text-sky-700" to="/admin/issues" />
+        <StatTile label="Users" value={users.total} sub={`+${users.newThisWeek} this week`} Icon={Users} tint="bg-brand-50 text-brand-700" to="/users" />
+        <StatTile label="Admins" value={users.admins} Icon={ShieldCheck} tint="bg-slate-100 text-ink-900" to="/users?role=admin" />
+        <StatTile label="Deactivated" value={users.deactivated} Icon={Ban} tint="bg-red-50 text-red-700" to="/users?status=deactivated" />
+        <StatTile label="Issues" value={issues.total} sub={`${issues.byStatus.OPEN + issues.byStatus.IN_PROGRESS} still active`} Icon={Layers} tint="bg-sky-50 text-sky-700" to="/issues" />
         <StatTile label="Comments" value={comments} Icon={MessageSquare} tint="bg-violet-50 text-violet-700" />
       </section>
 
@@ -216,7 +216,7 @@ export default function AdminOverview() {
         <div className="card">
           <div className="card-header">
             <h2 className="card-title">Recent sign-ups</h2>
-            <Link to="/admin/users" className="text-sm font-semibold text-brand-700 hover:text-brand-800">View all</Link>
+            <Link to="/users" className="text-sm font-semibold text-brand-700 hover:text-brand-800">View all</Link>
           </div>
           <ul className="divide-y divide-slate-100">
             {users.recent.map((u) => (

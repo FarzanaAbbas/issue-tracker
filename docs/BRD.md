@@ -135,7 +135,7 @@ Teams that track issues through email threads, chat messages or spreadsheets los
 
 | ID | Requirement |
 | --- | --- |
-| FR-7.1 | Every user has a role: **User** (default) or **Admin**. Only admins see the *Admin panel* section in the sidebar and can open admin pages; the API rejects non-admins with `403`. |
+| FR-7.1 | Every user has a role: **User** (default) or **Admin**. The admin panel is a **separate application** with its own URL/port and sign-in page; only admins can sign in, and its session is separate from the user app's. The API rejects requests without an admin session (`401`) or from non-admins (`403`). |
 | FR-7.2 | **Overview:** shows the number of users (and new users this week), admins, deactivated accounts, issues and comments; a chart of issues created per day over the last 14 days; the status mix; team workload (open, in-progress and closed issues per assignee); and the five most recent sign-ups. |
 | FR-7.3 | **Users:** admins can search users by name or email and filter by role and status. Each row shows the user's role, status, issues reported, open issues assigned and join date. |
 | FR-7.4 | Admins can **make a user an admin** or **remove admin access**. |
@@ -205,7 +205,7 @@ Rule: when an issue is deleted, its comments are deleted too.
 | Comments | `GET /api/issues/:id/comments`, `POST /api/issues/:id/comments`, `DELETE /api/comments/:id` |
 | Dashboard | `GET /api/dashboard` |
 | Health | `GET /api/health` |
-| Admin | `GET /api/admin/stats`, `GET /api/admin/users`, `PATCH /api/admin/users/:id`, `DELETE /api/admin/users/:id`, `POST /api/admin/issues/bulk` |
+| Admin | `POST /api/admin/auth/login`, `POST /api/admin/auth/logout`, `GET /api/admin/auth/me`, `GET /api/admin/issues`, `GET /api/admin/stats`, `GET /api/admin/users`, `PATCH /api/admin/users/:id`, `DELETE /api/admin/users/:id`, `POST /api/admin/issues/bulk` |
 
 The [README](../README.md#api-reference) documents every request and response.
 
@@ -219,6 +219,7 @@ The [README](../README.md#api-reference) documents every request and response.
 | --- | --- | --- |
 | React front end | **Vercel** at https://YOUR-PROJECT.vercel.app | The `client/dist` build is served from Vercel's global CDN. All non-API paths fall back to `index.html`, so client-side routing works. |
 | Express API | **Vercel serverless function** (`api/index.js`) | `vercel.json` rewrites every `/api/*` request to the Express app. Because the API shares the front end's domain, no CORS setup is needed. |
+| Admin panel | **Separate Vercel project** (Root Directory `admin`) at https://YOUR-ADMIN-PROJECT.vercel.app | A separate React app built from `admin/`. `admin/vercel.json` forwards `/api/*` to the main app, so the admin app uses the same API and database through its own domain and its own admin session cookie. |
 | Database | **MongoDB Atlas** (free M0 cluster) | A managed MongoDB service. The API connects to it using `MONGODB_URI`. |
 | Source code | **GitHub** at https://github.com/YOUR-USERNAME/issue-tracker-mern | Connected to Vercel for continuous deployment |
 
@@ -285,6 +286,13 @@ Vercel sets `NODE_ENV=production` automatically.
    - change its status,
    - add a comment,
    - and check that the dashboard counts update.
+
+### 9.4b Deploying the admin panel
+
+1. In Vercel, choose **Add New → Project** and import the **same** repository again.
+2. Set **Root Directory** to `admin` and **Framework Preset** to **Other**. Build settings come from `admin/vercel.json`.
+3. No environment variables are needed. `admin/vercel.json` forwards `/api/*` to the main app (`https://issue-tracker-two-xi.vercel.app`); if the main URL changes, update it there and in `admin/.env.production`.
+4. Deploy, open the admin URL and sign in with an admin account. Pushes to `main` redeploy both projects.
 
 ### 9.5 Updating the application
 

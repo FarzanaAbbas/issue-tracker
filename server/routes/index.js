@@ -1,5 +1,15 @@
 import { Router } from "express";
-import { bulkIssues, deleteUser, getStats, listUsers as adminListUsers, updateUser } from "../controllers/adminController.js";
+import {
+  adminLogin,
+  adminLogout,
+  adminMe,
+  bulkIssues,
+  deleteUser,
+  getStats,
+  listAllIssues,
+  listUsers as adminListUsers,
+  updateUser,
+} from "../controllers/adminController.js";
 import { login, logout, me, register } from "../controllers/authController.js";
 import { addComment, deleteComment, listComments } from "../controllers/commentController.js";
 import { getDashboard } from "../controllers/dashboardController.js";
@@ -11,14 +21,28 @@ import {
   updateIssue,
 } from "../controllers/issueController.js";
 import { listUsers } from "../controllers/userController.js";
-import { requireAdmin, requireAuth } from "../middleware/auth.js";
+import { requireAdminSession, requireAuth } from "../middleware/auth.js";
 import { asyncHandler as h } from "../utils/http.js";
 
 const router = Router();
 
 router.get("/health", (_req, res) => res.json({ ok: true }));
 
-// Auth
+// ---- Admin app API (separate session cookie, see middleware/auth.js) ----
+const admin = Router();
+admin.post("/auth/login", h(adminLogin));
+admin.post("/auth/logout", adminLogout);
+admin.use(requireAdminSession);
+admin.get("/auth/me", h(adminMe));
+admin.get("/stats", h(getStats));
+admin.get("/users", h(adminListUsers));
+admin.patch("/users/:id", h(updateUser));
+admin.delete("/users/:id", h(deleteUser));
+admin.get("/issues", h(listAllIssues));
+admin.post("/issues/bulk", h(bulkIssues));
+router.use("/admin", admin);
+
+// ---- User app API ----
 router.post("/auth/register", h(register));
 router.post("/auth/login", h(login));
 router.post("/auth/logout", logout);
@@ -40,12 +64,5 @@ router.post("/issues/:id/comments", h(addComment));
 router.delete("/comments/:id", h(deleteComment));
 
 router.get("/dashboard", h(getDashboard));
-
-// Admin panel
-router.get("/admin/stats", requireAdmin, h(getStats));
-router.get("/admin/users", requireAdmin, h(adminListUsers));
-router.patch("/admin/users/:id", requireAdmin, h(updateUser));
-router.delete("/admin/users/:id", requireAdmin, h(deleteUser));
-router.post("/admin/issues/bulk", requireAdmin, h(bulkIssues));
 
 export default router;

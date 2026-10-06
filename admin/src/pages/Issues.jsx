@@ -1,16 +1,16 @@
 import { CheckSquare, Search, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { api } from "../../api/client.js";
-import { UserCell } from "../../components/Avatar.jsx";
-import { PriorityBadge, StatusBadge } from "../../components/Badges.jsx";
-import ConfirmDialog from "../../components/ConfirmDialog.jsx";
-import PageHeader from "../../components/PageHeader.jsx";
-import { IssueTableSkeleton } from "../../components/Skeletons.jsx";
-import { EmptyState, ErrorState } from "../../components/States.jsx";
-import { useToast } from "../../context/ToastContext.jsx";
-import { invalidateIssueLists, useApi } from "../../hooks/useApi.js";
-import { PRIORITY_LABEL, STATUS_LABEL, formatDate } from "../../lib/format.js";
+import { useSearchParams } from "react-router-dom";
+import { USER_APP_URL, api } from "../api/client.js";
+import { UserCell } from "../components/Avatar.jsx";
+import { PriorityBadge, StatusBadge } from "../components/Badges.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import PageHeader from "../components/PageHeader.jsx";
+import { IssueTableSkeleton } from "../components/Skeletons.jsx";
+import { EmptyState, ErrorState } from "../components/States.jsx";
+import { useToast } from "../context/ToastContext.jsx";
+import { invalidateAll, useApi } from "../hooks/useApi.js";
+import { PRIORITY_LABEL, STATUS_LABEL, formatDate } from "../lib/format.js";
 
 export default function AdminIssues() {
   const toast = useToast();
@@ -59,10 +59,10 @@ export default function AdminIssues() {
   async function bulk(action) {
     setBusy(true);
     try {
-      const res = await api.post("/admin/issues/bulk", { ids: selectedIds, action, status: bulkStatus });
+      const res = await api.post("/issues/bulk", { ids: selectedIds, action, status: bulkStatus });
       toast(action === "delete" ? `${res.data.deleted} issue(s) deleted` : `${res.data.updated} issue(s) set to ${STATUS_LABEL[bulkStatus]}`);
       setSelected(new Set());
-      invalidateIssueLists();
+      invalidateAll();
       await refresh();
     } catch (err) {
       toast(err.message, "error");
@@ -80,7 +80,7 @@ export default function AdminIssues() {
       <PageHeader
         title="Issue management"
         description="Review every issue and apply changes in bulk."
-        breadcrumbs={[{ label: "Admin", to: "/admin" }, { label: "Issues" }]}
+        breadcrumbs={[{ label: "Admin", to: "/" }, { label: "Issues" }]}
       />
 
       <div className="card">
@@ -139,14 +139,14 @@ export default function AdminIssues() {
           <EmptyState title="No issues found" description={hasFilters ? "Try adjusting your filters." : "There are no issues yet."} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[880px] text-left">
+            <table className="w-full min-w-[760px] text-left">
               <thead>
                 <tr className="border-y border-slate-100 bg-slate-50/70">
                   <th className="w-12 px-6 py-3">
                     <input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-brand-600" checked={allSelected} onChange={toggleAll} aria-label="Select all issues" />
                   </th>
                   {["Issue", "Status", "Priority", "Assignee", "Reporter", "Created"].map((h) => (
-                    <th key={h} className="eyebrow px-4 py-3">{h}</th>
+                    <th key={h} className="eyebrow px-3 py-3">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -158,14 +158,14 @@ export default function AdminIssues() {
                       <td className="px-6 py-3.5">
                         <input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-brand-600" checked={checked} onChange={() => toggle(i.id)} aria-label={`Select ${i.title}`} />
                       </td>
-                      <td className="max-w-[320px] px-4 py-3.5">
-                        <Link to={`/issues/${i.id}`} className="block truncate text-sm font-semibold text-slate-900 hover:text-brand-700">{i.title}</Link>
+                      <td className="max-w-[260px] px-3 py-3.5">
+                        <a href={`${USER_APP_URL}/issues/${i.id}`} target="_blank" rel="noreferrer" title="Open in the user app" className="block truncate text-sm font-semibold text-slate-900 hover:text-brand-700">{i.title}</a>
                       </td>
-                      <td className="px-4 py-3.5"><StatusBadge status={i.status} /></td>
-                      <td className="px-4 py-3.5"><PriorityBadge priority={i.priority} /></td>
-                      <td className="px-4 py-3.5"><UserCell user={i.assignee} /></td>
-                      <td className="px-4 py-3.5"><UserCell user={i.reporter} /></td>
-                      <td className="whitespace-nowrap px-4 py-3.5 text-sm text-slate-500">{formatDate(i.createdAt)}</td>
+                      <td className="px-3 py-3.5"><StatusBadge status={i.status} /></td>
+                      <td className="px-3 py-3.5"><PriorityBadge priority={i.priority} /></td>
+                      <td className="px-3 py-3.5"><UserCell user={i.assignee} /></td>
+                      <td className="px-3 py-3.5"><UserCell user={i.reporter} /></td>
+                      <td className="whitespace-nowrap px-3 py-3.5 text-sm text-slate-500">{formatDate(i.createdAt)}</td>
                     </tr>
                   );
                 })}
